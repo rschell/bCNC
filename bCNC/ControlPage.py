@@ -505,7 +505,7 @@ class DROFrame(CNCRibbon.PageFrame):
     def updateCoords(self):
         try:
             focus = self.focus_get()
-        except Exception:
+        except KeyError:
             focus = None
         if focus is not self.xwork:
             self.xwork.delete(0, END)
@@ -563,7 +563,7 @@ class DROFrame(CNCRibbon.PageFrame):
         try:
             value = round(eval(self.xwork.get(), None, CNC.vars), 3)
             self.app.mcontrol._wcsSet(value, None, None, None, None, None)
-        except Exception:
+        except ValueError:
             pass
 
     # ----------------------------------------------------------------------
@@ -573,7 +573,7 @@ class DROFrame(CNCRibbon.PageFrame):
         try:
             value = round(eval(self.ywork.get(), None, CNC.vars), 3)
             self.app.mcontrol._wcsSet(None, value, None, None, None, None)
-        except Exception:
+        except ValueError:
             pass
 
     # ----------------------------------------------------------------------
@@ -583,7 +583,7 @@ class DROFrame(CNCRibbon.PageFrame):
         try:
             value = round(eval(self.zwork.get(), None, CNC.vars), 3)
             self.app.mcontrol._wcsSet(None, None, value, None, None, None)
-        except Exception:
+        except ValueError:
             pass
 
     # ----------------------------------------------------------------------
@@ -798,7 +798,7 @@ class abcDROFrame(CNCRibbon.PageExLabelFrame):
     def updateCoords(self):
         try:
             focus = self.focus_get()
-        except Exception:
+        except KeyError:
             focus = None
             if focus is not self.awork:
                 self.awork.delete(0, END)
@@ -864,7 +864,7 @@ class abcDROFrame(CNCRibbon.PageExLabelFrame):
         try:
             value = round(eval(self.awork.get(), None, CNC.vars), 3)
             self.app.mcontrol._wcsSet(None, None, None, value, None, None)
-        except Exception:
+        except ValueError:
             pass
 
     # ----------------------------------------------------------------------
@@ -874,7 +874,7 @@ class abcDROFrame(CNCRibbon.PageExLabelFrame):
         try:
             value = round(eval(self.bwork.get(), None, CNC.vars), 3)
             self.app.mcontrol._wcsSet(None, None, None, None, value, None)
-        except Exception:
+        except ValueError:
             pass
 
     # ----------------------------------------------------------------------
@@ -884,7 +884,7 @@ class abcDROFrame(CNCRibbon.PageExLabelFrame):
         try:
             value = round(eval(self.cwork.get(), None, CNC.vars), 3)
             self.app.mcontrol._wcsSet(None, None, None, None, None, value)
-        except Exception:
+        except ValueError:
             pass
 
     # ----------------------------------------------------------------------
@@ -1073,23 +1073,23 @@ class ControlFrame(CNCRibbon.PageExLabelFrame):
             self.zstep.fill(zsl)
             tkExtra.Balloon.set(self.zstep, _("Step for Z move operation"))
             self.addWidget(self.zstep)
-        except Exception:
+        except ValueError:
             self.zstep = self.step
 
         # Default steppings
         try:
             self.step1 = Utils.getFloat("Control", "step1")
-        except Exception:
+        except ValueError:
             self.step1 = 0.1
 
         try:
             self.step2 = Utils.getFloat("Control", "step2")
-        except Exception:
+        except ValueError:
             self.step2 = 1
 
         try:
             self.step3 = Utils.getFloat("Control", "step3")
-        except Exception:
+        except ValueError:
             self.step3 = 10
 
         # ---
@@ -1257,7 +1257,7 @@ class ControlFrame(CNCRibbon.PageExLabelFrame):
             step = float(step)
             if step <= 0.0:
                 step = 1.0
-        except Exception:
+        except ValueError:
             step = 1.0
         power = math.pow(10.0, math.floor(math.log10(step)))
         return round(step / power) * power, power
@@ -1541,23 +1541,23 @@ class abcControlFrame(CNCRibbon.PageExLabelFrame):
             self.astep.fill(asl)
             tkExtra.Balloon.set(self.astep, _("Step for A move operation"))
             self.addWidget(self.astep)
-        except Exception:
+        except ValueError:
             self.astep = self.step
 
         # Default steppings
         try:
             self.step1 = Utils.getFloat("abcControl", "step1")
-        except Exception:
+        except ValueError:
             self.step1 = 0.1
 
         try:
             self.step2 = Utils.getFloat("abcControl", "step2")
-        except Exception:
+        except ValueError:
             self.step2 = 1
 
         try:
             self.step3 = Utils.getFloat("abcControl", "step3")
-        except Exception:
+        except ValueError:
             self.step3 = 10
 
         # ---
@@ -1727,7 +1727,7 @@ class abcControlFrame(CNCRibbon.PageExLabelFrame):
             step = float(step)
             if step <= 0.0:
                 step = 1.0
-        except Exception:
+        except ValueError:
             step = 1.0
         power = math.pow(10.0, math.floor(math.log10(step)))
         return round(step / power) * power, power

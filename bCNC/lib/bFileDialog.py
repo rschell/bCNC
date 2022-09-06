@@ -76,6 +76,7 @@ from tkinter import (
 import tkinter.messagebox as messagebox
 
 import tkExtra
+from Utils import _
 
 __author__ = "Vasilis Vlachoudis"
 __email__ = "Vasilis.Vlachoudis@cern.ch"
@@ -912,7 +913,6 @@ class FileDialog(Toplevel):
     # ----------------------------------------------------------------------
     def delete(self):
         sel = map(int, self.fileList.curselection())
-        sel.reverse()
         if not sel:
             return
         try:
