@@ -13,6 +13,8 @@ import numpy as np
 import ply
 import stl  # FIXME: write smaller STL parser
 
+import Utils
+logger = Utils.bCNClogger
 from CNC import Block
 from ToolsPage import Plugin
 
@@ -197,7 +199,7 @@ Also note you can export resulting slices to DXF and SVG if needed.
             with open(file) as f:
                 verts, faces, _ = ply.load_ply(f)
         else:
-            print("unknown file extension", fext)
+            logger.error("unknown file extension", fext)
             return None
 
         return verts, faces
@@ -303,7 +305,7 @@ Also note you can export resulting slices to DXF and SVG if needed.
             D = np.sqrt(np.abs(self.pdist_squareformed_numpy(verts)))
 
         # Test
-        print(len(verts), len(D), len(D[0]))
+        logger.debug(len(verts), len(D), len(D[0]))
 
         # Compute a mapping from old to new : for each input vert, store the
         # index of the new vert it will be merged into

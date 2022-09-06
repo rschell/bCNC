@@ -4,6 +4,7 @@
 # Date: 24-Aug-2014
 
 import Utils
+logger = Utils.bCNClogger
 
 try:
     import cv2 as cv
@@ -18,7 +19,7 @@ except ImportError:
 try:
     from PIL import Image, ImageTk
 except ImportError:
-    print("Unable to import Image, ImageTk from Pillow\n")
+    logger.warning("Unable to import Image, ImageTk from Pillow\n")
     cv = None
 
 

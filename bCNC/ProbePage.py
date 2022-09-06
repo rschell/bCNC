@@ -48,6 +48,7 @@ import CNCRibbon
 import Ribbon
 import tkExtra
 import Utils
+logger = Utils.bCNClogger
 from CNC import CNC, Block
 
 from Helpers import N_
@@ -2198,7 +2199,7 @@ class ToolFrame(CNCRibbon.PageFrame):
 
     # -----------------------------------------------------------------------
     def setProbeParams(self, dummy=None):
-        print("probe chg handler")
+        logger.info("Modified tool change probing location")
         CNC.vars["toolchangex"] = float(self.changeX.get())
         CNC.vars["toolchangey"] = float(self.changeY.get())
         CNC.vars["toolchangez"] = float(self.changeZ.get())

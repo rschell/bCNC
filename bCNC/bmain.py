@@ -50,13 +50,14 @@ from tkinter import (
     messagebox,
 )
 
+import Utils
+logger = Utils.bCNClogger
+
 try:
     import serial
 except ImportError:
     serial = None
-    print("testing mode, could not import serial")
-
-import Utils
+    logger.warning("testing mode, could not import serial")
 
 import bFileDialog
 import CNCCanvas
@@ -80,6 +81,7 @@ from Sender import NOT_CONNECTED, STATECOLOR, STATECOLORDEF, Sender
 from TerminalPage import TerminalPage
 from ToolsPage import Tools, ToolsPage
 
+logger = Utils.bCNClogger
 Utils.loadConfiguration()
 
 __version__ = Utils.__version__
@@ -88,7 +90,7 @@ __author__ = Utils.__author__
 __email__ = Utils.__email__
 
 if not (sys.version_info.major == 3 and sys.version_info.minor >= 8):
-    print("ERROR: Python3.8 or newer is required to run bCNC!!")
+    logger.error("ERROR: Python3.8 or newer is required to run bCNC!!")
     exit(1)
 
 __platform_fingerprint__ = "".join([
@@ -265,7 +267,7 @@ class Application(Tk, Sender):
                 last = n[-1]
                 if ((n == "abcDRO" or n == "abcControl")
                         and CNC.enable6axisopt is False):
-                    sys.stdout.write("Not Loading 6 axis displays\n")
+                    logger.warning("Not Loading 6 axis displays\n")
 
                 else:
                     try:
@@ -588,7 +590,7 @@ class Application(Tk, Sender):
         # XXX: basestring replaced
         if isinstance(v, (str, bytes)):
             v = v.strip()
-        print("entered " + str(type(v)) + ": " + str(v))
+        logger.always("entered " + str(type(v)) + ": " + str(v))
         return v
 
     # -----------------------------------------------------------------------
@@ -720,6 +722,9 @@ class Application(Tk, Sender):
     # -----------------------------------------------------------------------
     def loadConfig(self):
         global geometry
+
+        logging_level = Utils.getInt(Utils.__prg__, 'loglevel', 30)
+        logger.setLevel(logging_level)
 
         if geometry is None:
             geometry = "x".join([
@@ -2539,7 +2544,7 @@ class Application(Tk, Sender):
     # -----------------------------------------------------------------------
     def run(self, lines=None):
         self.cleanAfter = True  # Clean when this operation stops
-        print("Will clean after this operation")
+        logger.warning("Will clean after this operation")
 
         if self.serial is None and not CNC.developer:
             messagebox.showerror(

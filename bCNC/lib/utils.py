@@ -1,10 +1,13 @@
+import Utils
+logger = Utils.bCNClogger
+
 import numpy as np
 import numpy.linalg as la
 
 try:
     from mayavi import mlab
 except ImportError:
-    print("mayavi mlab lib not found")
+    logger.error("mayavi mlab lib not found")
 
 
 def points3d(verts, point_size=3, **kwargs):

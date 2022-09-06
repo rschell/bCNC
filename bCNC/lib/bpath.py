@@ -20,6 +20,9 @@ from math import (
 from operator import itemgetter
 
 from bmath import Vector, quadratic
+
+import Utils
+logger = Utils.bCNClogger
 from Helpers import to_zip
 
 __author__ = "Vasilis Vlachoudis"
@@ -1040,10 +1043,10 @@ class Path(list):
             return C, r, arcd
 
         def path2gc(path):
-            print("(Block-name: debug)")
-            print(f"g0 x{path[0].A[0]:f} y{path[0].A[1]:f}")
+            logger.debug("(Block-name: debug)")
+            logger.debug(f"g0 x{path[0].A[0]:f} y{path[0].A[1]:f}")
             for seg in path:
-                print(f"g1 x{seg.B[0]:f} y{seg.B[1]:f}")
+                logger.debug(f"g1 x{seg.B[0]:f} y{seg.B[1]:f}")
 
         numseg = max(2, numseg)
         npath = Path(self.name, self.color)
@@ -1778,7 +1781,7 @@ class Path(list):
 
             if len(odd) > 3:
                 # return None
-                print("Failed to find eulerian path! Using non-eulerized "
+                logger.debug("Failed to find eulerian path! Using non-eulerized "
                       + "path instead!")
                 # FIXME: Probably we should at least find some non-eulerian
                 #        paths instead?
@@ -1840,7 +1843,7 @@ class Path(list):
         subgs = []
         subg = getFirstSubGraph(eulg)
         while subg is not None:
-            print("subgraph", subg)
+            logger.debug("subgraph", subg)
             subgs.append(subg)
             subg = getFirstSubGraph(eulg)
 
@@ -1848,18 +1851,18 @@ class Path(list):
         for eulg in subgs:
             # Find eulerian path in graph
             eulp = eulerPath(eulg)
-            print("eulerpath", eulp)
+            logger.debug("eulerpath", eulp)
 
             # Reconstruct bpath from eulerian graph
             eulpath = Path("euler")
             lastb = self[eulp[-1]].B
-            print("--------")
+            logger.debug("--------")
             for i in eulp:
                 seg = self[i]
                 if not eq(lastb, seg.A):
                     seg.invert()
                     # seg._cross=False
-                print(seg)
+                logger.debug(seg)
                 eulpath.append(seg)
                 lastb = seg.B
             del eulpath[0]
@@ -1871,7 +1874,7 @@ class Path(list):
             return eulpaths[0]
             eulpath = Path("euler")
             for p in eulpaths:
-                print("path", p)
+                logger.debug("path", p)
                 eulpath.extend(p)
             return eulpath
         return eulpaths

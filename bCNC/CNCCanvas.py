@@ -48,8 +48,10 @@ import bmath
 import Camera
 import tkExtra
 import Utils
+logger = Utils.bCNClogger
 from CNC import CNC
 
+logger = Utils.bCNClogger
 # Probe mapping we need PIL and numpy
 try:
     from PIL import Image, ImageTk
@@ -1933,10 +1935,10 @@ class CNCCanvas(Canvas):
                     except AlarmException:
                         raise
                     except Exception:
-                        sys.stderr.write(
+                        logger.error(
                             _(">>> ERROR: {}\n").format(str(sys.exc_info()[1]))
                         )
-                        sys.stderr.write(_("     line: {}\n").format(line))
+                        logger.error(_("     line: {}\n").format(line))
                         cmd = None
                     if cmd is None or not drawG:
                         block.addPath(None)
@@ -2105,7 +2107,7 @@ class CanvasFrame(Frame):
 
         self.canvas = CNCCanvas(self, app, takefocus=True, background="White")
         # OpenGL context
-        print(f"self.canvas.winfo_id(): {self.canvas.winfo_id()}")
+        logger.info(f"self.canvas.info_id(): {self.canvas.winfo_id()}")
         self.canvas.grid(row=1, column=0, sticky=NSEW)
         sb = Scrollbar(self, orient=VERTICAL, command=self.canvas.yview)
         sb.grid(row=1, column=1, sticky=NS)

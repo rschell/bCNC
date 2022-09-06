@@ -12,6 +12,8 @@ from math import (
     sqrt,
 )
 
+import Utils
+logger = Utils.bCNClogger
 from CNC import CNC, Block
 from ToolsPage import Plugin
 
@@ -162,7 +164,7 @@ class Tool(Plugin):
             app.setStatus(_("Scaling abort: Please select some path"))
             return
         elements = len(app.editor.getSelectedBlocks())
-        print("elements", elements)
+        logger.always("elements", elements)
         for bid in app.editor.getSelectedBlocks():
             if len(app.gcode.toPath(bid)) < 1:
                 continue
@@ -171,7 +173,7 @@ class Tool(Plugin):
                 center = path.center()
             else:
                 center = 0, 0
-        print("center", center[0], center[1])
+        logger.always("center", center[0], center[1])
 
         # Get all segments from gcode
         allSegments = self.extractAllSegments(app, selBlocks)[0]

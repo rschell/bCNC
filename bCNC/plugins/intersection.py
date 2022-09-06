@@ -6,6 +6,8 @@ from math import (
     cos,
     sin,
 )
+import Utils
+logger = Utils.bCNClogger
 
 from bpath import EPS, Path, Segment, eq
 from CNC import Block
@@ -96,7 +98,7 @@ class Tool(Plugin):
         return newpath
 
     def _findSubpath(self, path, A, B):
-        print("finding", A, B)
+        logger.always("finding", A, B)
 
         sub = None
         for i in range(0, len(path) * 2):  # iterate twice with wrap around
@@ -105,13 +107,13 @@ class Tool(Plugin):
 
             if eq(seg.A, A):
                 sub = Path("subp")
-            print("seg", sub is None, seg)
+            logger.always("seg", sub is None, seg)
             if sub is not None:
                 sub.append(seg)
             if eq(seg.B, B):
                 break
 
-        print("found", sub)
+        logger.always("found", sub)
         return sub
 
     def pathBoolIntersection(self, basepath, islandpath):
@@ -121,7 +123,7 @@ class Tool(Plugin):
             if basepath.isInside(segment.midPoint()):
                 first = i
         if first is None:
-            print("not intersecting paths")
+            logger.always("not intersecting paths")
             return None
 
         # generate intersected path
@@ -138,8 +140,8 @@ class Tool(Plugin):
             else:
                 if A is not None:
                     newisland.extend(self.findSubpath(basepath, A, segment.A))
-                    print("new", newisland)
+                    logger.always("new", newisland)
                     A = None
                 newisland.append(segment)
-        print("new2", newisland)
+        logger.always("new2", newisland)
         return newisland

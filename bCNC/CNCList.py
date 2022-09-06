@@ -14,6 +14,9 @@ from tkinter import (
 import tkinter.font as tkfont
 
 import tkExtra
+
+import Utils
+logger = Utils.bCNClogger
 from CNC import CNC, Block
 
 BLOCK_COLOR = "LightYellow"
@@ -963,19 +966,19 @@ class CNCListbox(Listbox):
     def dump(self, event=None):
         if not CNC.developer:
             return
-        print("*** LIST ***")
+        logger.debug("*** LIST ***")
         for i, sel in enumerate(self.get(0, END)):
             # TODO: do we need .encode()???
-            print(i, sel.encode("ascii", "replace"))
+            logger.debug(i, sel.encode("ascii", "replace"))
 
-        print("\n*** ITEMS ***")
+        logger.debug("\n*** ITEMS ***")
         for i, item in enumerate(self._items):
-            print(i, item)
+            logger.debug(i, item)
 
-        print("\n*** CODE ***")
+        logger.debug("\n*** CODE ***")
         for i, block in enumerate(self.gcode.blocks):
-            print("Block:", i, block.name())
+            logger.debug("Block:", i, block.name())
             for j, line in enumerate(block):
-                print("   %3d %s" % (j, line))
+                logger.debug("   %3d %s" % (j, line))
 
-        print("\nBLOCKPOS=", self._blockPos)
+        logger.debug("\nBLOCKPOS=", self._blockPos)

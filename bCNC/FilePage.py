@@ -24,6 +24,7 @@ import CNCRibbon
 import Ribbon
 import tkExtra
 import Utils
+logger = Utils.bCNClogger
 
 from Helpers import N_
 
@@ -33,7 +34,7 @@ __email__ = "vvlachoudis@gmail.com"
 try:
     from serial.tools.list_ports import comports
 except Exception:
-    print("Using fallback Utils.comports()!")
+    logger.warning("Using fallback Utils.comports()!")
     from Utils import comports
 
 BAUDS = [2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400]
@@ -376,7 +377,7 @@ class SerialFrame(CNCRibbon.PageLabelFrame):
     def comportClean(self, event=None):
         clean = self.portCombo.get().split("\t")[0]
         if self.portCombo.get() != clean:
-            print("comport fix")
+            logger.warning("comport fix")
             self.portCombo.set(clean)
 
     # -----------------------------------------------------------------------
@@ -384,7 +385,7 @@ class SerialFrame(CNCRibbon.PageLabelFrame):
         try:
             return comports(include_links=True)
         except TypeError:
-            print("Using old style comports()!")
+            logger.warning("Using old style comports()!")
             return comports()
 
     def comportRefresh(self, dbg=False):
@@ -396,7 +397,7 @@ class SerialFrame(CNCRibbon.PageLabelFrame):
                 comport = ""
                 for j in i:
                     comport += j + "\t"
-                print(comport)
+                logger.debug(comport)
             for hw in i[2].split(" "):
                 hwgrep += ["hwgrep://" + hw + "\t" + i[1]]
 

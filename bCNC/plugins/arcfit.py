@@ -1,6 +1,8 @@
 # Author: @harvie Tomas Mudrunka
 # Date: 25 sept 2018
 
+import Utils
+logger = Utils.bCNClogger
 from CNC import Block
 from ToolsPage import Plugin
 
@@ -80,7 +82,7 @@ Before this plugin tries to fit arcs it also tries to fit and merge longest poss
             npath = npath.arcFit(preci, numseg)
             if npath.length() <= 0:
                 # FIXME: not sure how this could happen
-                print("Warning: ignoring zero length path!")
+                logger.warning("Warning: ignoring zero length path!")
                 continue
             eblock = app.gcode.fromPath(npath, eblock)
             blocks.append(eblock)

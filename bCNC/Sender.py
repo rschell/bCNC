@@ -27,6 +27,7 @@ from CNC import CNC, MSG, UPDATE, WAIT, GCode
 __author__ = "Vasilis Vlachoudis"
 __email__ = "vvlachoudis@gmail.com"
 
+logger = Utils.bCNClogger
 try:
     import serial
 except ImportError:
@@ -690,7 +691,7 @@ class Sender:
     # See https://github.com/vlachoudis/bCNC/issues/1035
     # ----------------------------------------------------------------------
     def jobDone(self):
-        print(f"Job done. Purging the controller. (Running: {self.running})")
+        logger.always(f"Job done. Purging the controller. (Running: {self.running})")
         self.purgeController()
 
     # ----------------------------------------------------------------------
@@ -699,7 +700,7 @@ class Sender:
     # Right now the primary idea of this is to detect when job stopped running
     # ----------------------------------------------------------------------
     def controllerStateChange(self, state):
-        print(
+        logger.info(
             f"Controller state changed to: {state} (Running: {self.running})")
         if state in ("Idle"):
             self.mcontrol.viewParameters()

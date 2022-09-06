@@ -220,7 +220,7 @@ for e1, e0 in (
 
 class _GenericGRBL(_GenericController):
     def test(self):
-        print("test supergen grbl")
+        logger.debug("test supergen grbl")
 
     def viewSettings(self):
         self.master.sendGCode("$$")

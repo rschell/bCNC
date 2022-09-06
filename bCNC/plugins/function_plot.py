@@ -1,3 +1,5 @@
+import Utils
+logger = Utils.bCNClogger
 from CNC import CNC, Block
 from ToolsPage import Plugin
 
@@ -105,7 +107,7 @@ TODO
                 Y.append(None)
                 e = str(exc)
                 if e != e_old:  # If there is a different exception - display it
-                    print("Warning: " + str(e))
+                    logger.warning("Warning: " + str(e))
                     app.setStatus(_("Warning: " + str(e)))
                     e_old = e
 
@@ -270,4 +272,4 @@ TODO
         )  # insert blocks over active block in the editor
         app.refresh()  # refresh editor
         app.setStatus(_("Generated function graph"))  # feed back result
-        print()
+        logger.warning()

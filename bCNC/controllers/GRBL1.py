@@ -3,6 +3,8 @@
 from _GenericController import SPLITPAT
 from _GenericGRBL import _GenericGRBL
 from CNC import CNC
+import Utils
+logger = Utils.bCNClogger
 
 OV_FEED_100 = chr(0x90)  # Extended override commands
 OV_FEED_i10 = chr(0x91)
@@ -202,11 +204,11 @@ class Controller(_GenericGRBL):
                     if "S" in word[1]:
                         if (CNC.vars["state"] == "Idle"
                                 and not self.master.running):
-                            print("Stream requested by CYCLE START "
+                            logger.info("Stream requested by CYCLE START "
                                   + "machine button")
                             self.master.event_generate("<<Run>>", when="tail")
                         else:
-                            print(
+                            logger.info(
                                 "Ignoring machine stream request, "
                                 + "because of state: ",
                                 CNC.vars["state"],

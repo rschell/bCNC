@@ -10,6 +10,39 @@ import os
 import sys
 import traceback
 
+import logger
+bCNClogger = logger.Logger()
+bCNClogger.setLevel(logger.WARNING)
+
+__author__ = "Vasilis Vlachoudis"
+__email__ = "vvlachoudis@gmail.com"
+__version__ = "0.9.15"
+__date__ = "24 June 2022"
+__prg__ = "bCNC"
+
+
+__platform_fingerprint__ = "({} py{}.{}.{})".format(
+    sys.platform,
+    sys.version_info.major,
+    sys.version_info.minor,
+    sys.version_info.micro,
+)
+__title__ = f"{__prg__} {__version__} {__platform_fingerprint__}"
+
+__prg__ = "bCNC"
+prgpath = os.path.abspath(os.path.dirname(__file__))
+if getattr(sys, "frozen", False):
+    # When being bundled by pyinstaller, paths are different
+    bCNClogger.info("Running as pyinstaller bundle!", sys.argv[0])
+    prgpath = os.path.abspath(os.path.dirname(sys.argv[0]))
+iniSystem = os.path.join(prgpath, f"{__prg__}.ini")
+iniUser = os.path.expanduser(f"~/.{__prg__}")
+hisFile = os.path.expanduser(f"~/.{__prg__}.history")
+
+_ = gettext.translation(
+    "bCNC", os.path.join(prgpath, "locale"), fallback=True
+).gettext
+
 from tkinter import (
     TclError,
     YES,
@@ -46,46 +79,13 @@ from tkinter import (
 import tkinter.font as tkfont
 import configparser
 
-import Ribbon
 import tkExtra
-
-from lib.log import say
+import Ribbon
 
 try:
     import serial
 except Exception:
     serial = None
-
-__author__ = "Vasilis Vlachoudis"
-__email__ = "vvlachoudis@gmail.com"
-__version__ = "0.9.15"
-__date__ = "24 June 2022"
-__prg__ = "bCNC"
-
-
-__platform_fingerprint__ = "({} py{}.{}.{})".format(
-    sys.platform,
-    sys.version_info.major,
-    sys.version_info.minor,
-    sys.version_info.micro,
-)
-__title__ = f"{__prg__} {__version__} {__platform_fingerprint__}"
-
-__prg__ = "bCNC"
-prgpath = os.path.abspath(os.path.dirname(__file__))
-if getattr(sys, "frozen", False):
-    # When being bundled by pyinstaller, paths are different
-    print("Running as pyinstaller bundle!", sys.argv[0])
-    prgpath = os.path.abspath(os.path.dirname(sys.argv[0]))
-iniSystem = os.path.join(prgpath, f"{__prg__}.ini")
-iniUser = os.path.expanduser(f"~/.{__prg__}")
-hisFile = os.path.expanduser(f"~/.{__prg__}.history")
-
-
-_ = gettext.translation(
-    "bCNC", os.path.join(prgpath, "locale"), fallback=True
-).gettext
-
 
 def N_(message):
     return message
@@ -141,9 +141,7 @@ LANGUAGES = {
 icons = {}
 images = {}
 config = configparser.ConfigParser(interpolation=None)
-print(
-    "new-config", __prg__, config
-)  # This is here to debug the fact that config is sometimes instantiated twice
+bCNClogger.info(f"new-config {__prg__} {config}")
 language = ""
 
 _errorReport = True
@@ -157,7 +155,7 @@ _FONT_SECTION = "Font"
 # FIXME: create single instance of this and pass it to all parts of application
 class Config:
     def greet(self, who=__prg__):
-        print(f"Config class loaded in {who}")
+        bCNClogger.info(f"Config class loaded in {who}")
 
 
 # -----------------------------------------------------------------------------
@@ -511,7 +509,7 @@ def addException():
             # FIXME: self outside of Class
             ReportDialog(self.widget)  # noqa: F821 - see fixme
     except Exception:
-        say(str(sys.exc_info()))
+        logger.error(str(sys.exc_info()))
 
 
 # =============================================================================

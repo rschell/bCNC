@@ -24,6 +24,10 @@ from bstl import Binary_STL_Writer
 from dxf import DXF
 from svgcode import SVGcode
 from Helpers import to_zip
+import Utils
+import logging
+
+logger = Utils.bCNClogger
 
 IDPAT = re.compile(r".*\bid:\s*(.*?)\)")
 PARENPAT = re.compile(r"(\(.*?\))")
@@ -1234,8 +1238,8 @@ class CNC:
                 try:
                     return compile(line[1:], "", "exec")
                 except Exception as e:
-                    print("Compile line error: \n")
-                    print(e)
+                    logger.error("Compile line error: \n")
+                    logger.error(e)
                     return None
 
         # most probably an assignment like  #nnn = expr
@@ -2396,7 +2400,7 @@ class GCode:
                 tablock.color = "orange"
                 tablock.extend(self.createTab(*items))
                 self.insBlocks(-1, [tablock], "Legacy tab")
-                print(
+                logger.warning(
                     "WARNING: Converted legacy tabs loaded from file to new "
                     f"g-code island tabs: {tablock._name}"
                 )

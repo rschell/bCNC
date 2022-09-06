@@ -3,6 +3,8 @@
 
 import re
 import time
+import Utils
+logger = Utils.bCNClogger
 
 from CNC import CNC, WCS
 
@@ -29,7 +31,7 @@ VARPAT = re.compile(r"^\$(\d+)=(\d*\.?\d*) *\(?.*")
 
 class _GenericController:
     def test(self):
-        print("test supergen")
+        logger.debug("test supergen")
 
     def initController(self):
         text = Utils.getStr("CNC","init")
@@ -233,7 +235,7 @@ class _GenericController:
         # Do not show g-code errors, when machine is already in alarm state
         if (CNC.vars["state"].startswith("ALARM:")
                 and state.startswith("error:")):
-            print(f"Suppressed: {state}")
+            logger.info(f"Supressed: {state}")
             return
 
         # Do not show alarm without number when we already
