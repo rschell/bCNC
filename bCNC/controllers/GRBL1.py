@@ -6,6 +6,8 @@ from CNC import CNC
 import Utils
 logger = Utils.bCNClogger
 
+OV_JOG_CANCEL = chr(0x85)
+
 OV_FEED_100 = chr(0x90)  # Extended override commands
 OV_FEED_i10 = chr(0x91)
 OV_FEED_d10 = chr(0x92)
