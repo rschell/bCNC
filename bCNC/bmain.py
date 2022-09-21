@@ -294,6 +294,7 @@ class Application(Tk, Sender):
         self.gstate = Page.frames["State"]
         self.control = Page.frames["Control"]
         self.abccontrol = Page.frames["abcControl"]
+        self.continuouscontrol = Page.frames["continuousControl"]
         self.editor = Page.frames["Editor"].editor
         self.terminal = Page.frames["Terminal"].terminal
         self.buffer = Page.frames["Terminal"].buffer

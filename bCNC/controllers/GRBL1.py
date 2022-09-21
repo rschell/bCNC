@@ -37,6 +37,9 @@ class Controller(_GenericGRBL):
     def jog(self, direction, feed=10000):
         self.master.sendGCode(f"$J=G91 {direction} F{float(feed)}")
 
+    def cjogcancel(self):
+        self.master.serial_write(OV_JOG_CANCEL)
+
     def overrideSet(self):
         CNC.vars["_OvChanged"] = False  # Temporary
         # Check feed
