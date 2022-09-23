@@ -1918,7 +1918,7 @@ class CNCCanvas(Canvas):
                 for j, line in enumerate(block):
                     n -= 1
                     if n == 0:
-                        if time.time() - startTime > DRAW_TIME:
+                        if DRAW_TIME != 'inf' and time.time() - startTime > int(DRAW_TIME):
                             raise AlarmException()
                         # Force a periodic update since this loop can take time
                         if time.time() - before > 1.0:
@@ -2143,7 +2143,7 @@ class CanvasFrame(Frame):
 
         self.view.set(Utils.getStr("Canvas", "view", VIEWS[0]))
 
-        DRAW_TIME = Utils.getInt("Canvas", "drawtime", DRAW_TIME)
+        DRAW_TIME = Utils.getStr("Canvas", "drawtime", DRAW_TIME)
 
         INSERT_COLOR = Utils.getStr("Color", "canvas.insert", INSERT_COLOR)
         GANTRY_COLOR = Utils.getStr("Color", "canvas.gantry", GANTRY_COLOR)
@@ -2164,7 +2164,7 @@ class CanvasFrame(Frame):
 
     # ----------------------------------------------------------------------
     def saveConfig(self):
-        Utils.setInt("Canvas", "drawtime", DRAW_TIME)
+        Utils.setStr("Canvas", "drawtime", DRAW_TIME)
         Utils.setStr("Canvas", "view", self.view.get())
         Utils.setBool("Canvas", "axes", self.draw_axes.get())
         Utils.setBool("Canvas", "grid", self.draw_grid.get())
@@ -2445,7 +2445,7 @@ class CanvasFrame(Frame):
     def drawTimeChange(self):
         global DRAW_TIME
         try:
-            DRAW_TIME = int(self.drawTime.get())
+            DRAW_TIME = self.drawTime.get()
         except ValueError:
-            DRAW_TIME = 5 * 60
+            DRAW_TIME = "inf"
         self.viewChange()
