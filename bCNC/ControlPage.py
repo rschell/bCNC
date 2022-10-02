@@ -2634,10 +2634,12 @@ class StateFrame(CNCRibbon.PageExLabelFrame):
         try:
             tlo = float(self.tlo.get())
             self.app.mcontrol.setTLO(tlo)
+            CNC.vars["TLO"] = tlo
             self.app.mcontrol.viewParameters()
             self.event_generate("<<CanvasFocus>>")
         except ValueError:
-            pass
+            return False
+        return True
 
     # ----------------------------------------------------------------------
     def setTool(self, event=None):
