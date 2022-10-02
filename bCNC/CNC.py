@@ -709,6 +709,8 @@ class CNC:
         "_camwy": 0.0,
         "G": [],
         "TLO": 0.0,
+        "mzsensor": 0.0,
+        "sensorheight": 0.0,
         "motion": "G0",
         "WCS": "G54",
         "plane": "G17",
@@ -717,7 +719,6 @@ class CNC:
         "arc": "G91.1",
         "units": "G20",
         "cutter": "",
-        "tlo": "",
         "program": "M0",
         "spindle": "M5",
         "coolant": "M9",
@@ -781,7 +782,8 @@ class CNC:
             elif g[0] == "S":
                 CNC.vars["rpm"] = float(g[1:])
             elif g[0] == "T":
-                CNC.vars["tool"] = int(g[1:])
+                # accept value only if tool change managed by controller
+                if CNC.toolPolicy <= 1: CNC.vars["tool"] = int(g[1:] or 0)
             else:
                 var = MODAL_MODES.get(g)
                 if var is not None:
@@ -984,7 +986,7 @@ class CNC:
         self.unit = 1.0
         self.mval = 0
         self.lval = 1
-        self.tool = 0
+        self.tool = CNC.vars["tool"]
         self._lastTool = None
 
         self.absolute = True  # G90/G91     absolute/relative motion
@@ -1822,25 +1824,24 @@ class CNC:
     # ----------------------------------------------------------------------
     # code to change manually tool
     # ----------------------------------------------------------------------
-    def toolChange(self, tool=None):
-        if tool is not None:
+    def toolChange(self, newtool=None):
+        if newtool is not None:
             # Force a change
-            self.tool = tool
+            self.tool = newtool
             self._lastTool = None
 
         # check if it is the same tool
         if self.tool is None or self.tool == self._lastTool:
+            print("tool change not required, requested tool = current tool")
             return []
 
         # create the necessary code
         lines = []
         # remember state and populate variables,
         # FIXME: move to ./controllers/_GenericController.py
-        lines.append(
-            "$g"
-        )
+        lines.append("$g")  # remember state
+        lines.append("$#")  # populate GRBL parameters
         lines.append("m5")  # stop spindle
-        lines.append("%wait")
         lines.append("%_x,_y,_z = wx,wy,wz")  # remember position
         lines.append("g53 g0 z[toolchangez]")
         lines.append("g53 g0 x[toolchangex] y[toolchangey]")
@@ -1848,9 +1849,9 @@ class CNC:
 
         if CNC.comment:
             lines.append(
-                f"%msg Tool change T{int(self.tool):02} ({CNC.comment})")
+                f"%msg Tool change T{int(newtool):02} ({CNC.comment})")
         else:
-            lines.append(f"%msg Tool change T{int(self.tool):02}")
+            lines.append(f"%msg Tool change T{int(newtool):02}")
         lines.append("m0")  # feed hold
 
         if CNC.toolPolicy < 4:
@@ -1885,16 +1886,16 @@ class CNC:
                 # Adjust the current WCS to fit to the tool
                 # FIXME could be done dynamically in the code
                 p = WCS.index(CNC.vars["WCS"]) + 1
-                lines.append(f"g10l20p{int(p)} z[toolheight]")
+                lines.append(f"g10l20p{int(p)} z[TLO]")
                 lines.append("%wait")
 
             elif CNC.toolPolicy == 3:
                 # Modify the tool length, update the TLO
                 lines.append("g4 p1")  # wait a sec to get the probe info
                 lines.append("%wait")
-                lines.append("%global TLO; TLO=prbz-toolmz")
-                lines.append("g43.1z[TLO]")
+                lines.append("%global TLO; TLO=prbz-mzsensor")
                 lines.append("%update TLO")
+                lines.append("g43.1z[TLO]")
 
             lines.append("g53 g0 z[toolchangez]")
             lines.append("g53 g0 x[toolchangex] y[toolchangey]")
@@ -1904,6 +1905,9 @@ class CNC:
             lines.append("%msg Restart spindle")
             lines.append("m0")  # feed hold
 
+        # Done with tool change update displays
+        lines.append("%global tool; tool=newtool")
+        lines.append("%update tool")
         # restore state
         lines.append("g90")  # restore mode
         lines.append("g0 x[_x] y[_y]")  # ... x,y position
@@ -1911,8 +1915,9 @@ class CNC:
         lines.append("f[feed] [spindle]")  # ... feed and spindle
         lines.append("g4 p5")  # wait 5s for spindle to speed up
 
-        # remember present tool
         self._lastTool = self.tool
+        # remember present tool
+        CNC.vars["tool"] = self.tool
         return lines
 
     # ----------------------------------------------------------------------
@@ -5234,7 +5239,8 @@ class GCode:
                         elif CNC.toolPolicy == 1:
                             skip = True  # skip whole line
                         elif CNC.toolPolicy >= 2:
-                            expand = CNC.compile(self.cnc.toolChange())
+                            expand = CNC.compile(self.cnc.toolChange(self.tool))
+                            CNC.vars["tool"] = self.tool
                     self.cnc.motionEnd()
 
                 if expand is not None:

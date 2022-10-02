@@ -292,7 +292,7 @@ class ProbeCommonFrame(CNCRibbon.PageFrame):
         CNCRibbon.PageFrame.__init__(self, master, "ProbeCommon", app)
 
         lframe = tkExtra.ExLabelFrame(
-            self, text=_("Common"), foreground="DarkBlue")
+            self, text=_("Z-Sensor"), foreground="DarkBlue")
         lframe.pack(side=TOP, fill=X)
         frame = lframe.frame
 
@@ -341,25 +341,59 @@ class ProbeCommonFrame(CNCRibbon.PageFrame):
         self.addWidget(ProbeCommonFrame.probeFeed)
 
         # ----
-        # Tool offset
+        # Probe Sensor
         row += 1
         col = 0
-        Label(frame, text=_("TLO")).grid(row=row, column=col, sticky=E)
+        Label(frame, text=_("Sensor Height (MZ)")).grid(row=row, column=col, sticky=E)
         col += 1
-        ProbeCommonFrame.tlo = tkExtra.FloatEntry(
-            frame, background=tkExtra.GLOBAL_CONTROL_BACKGROUND
+        self.probeSensorVar = StringVar()
+        self.probeSensorVar.trace("w", lambda *_: ProbeCommonFrame.probeUpdate())
+        ProbeCommonFrame.probeSensor = tkExtra.FloatEntry(
+            frame, background=tkExtra.GLOBAL_CONTROL_BACKGROUND, width=10,
+            textvariable=self.probeSensorVar
         )
-        ProbeCommonFrame.tlo.grid(row=row, column=col, sticky=EW)
+        ProbeCommonFrame.probeSensor.grid(row=row, column=col, sticky=W)
         tkExtra.Balloon.set(
-            ProbeCommonFrame.tlo, _("Set tool offset for probing"))
-        self.addWidget(ProbeCommonFrame.tlo)
-        self.tlo.bind("<Return>", self.tloSet)
-        self.tlo.bind("<KP_Enter>", self.tloSet)
+            ProbeCommonFrame.probeSensor, _("Probe sensor height (MZ)"))
+        self.addWidget(ProbeCommonFrame.probeSensor)
+        ProbeCommonFrame.probeSensor.bind("<Return>", self.probeUpdate)
+        ProbeCommonFrame.probeSensor.bind("<KP_Enter>", self.probeUpdate)
+
+        ProbeCommonFrame.getSensorButton = Button(
+            frame, text=_("get"), command=self.getSensorMz, padx=2, pady=1)
+        ProbeCommonFrame.getSensorButton.grid(row=row, column=col)
+        tkExtra.Balloon.set(
+            ProbeCommonFrame.getSensorButton,
+            _("Get current gantry position as machine sensor location")
+        )
+        self.addWidget(ProbeCommonFrame.getSensorButton)
+
+        ProbeCommonFrame.calibrateSensorButton = Button(frame,
+            text=_("Calibrate"), command=self.calibrate_sensor,
+            padx=2, pady=1)
+        ProbeCommonFrame.calibrateSensorButton.grid(row=row, column=col,
+            sticky=E)
+        tkExtra.Balloon.set(ProbeCommonFrame.calibrateSensorButton,
+            _("Perform probing to set sensor height")        )
+        self.addWidget(ProbeCommonFrame.calibrateSensorButton)
+
+        row += 1
+        col = 0
+        Label(frame, text=_("Sensor Thickness (WZ)")).grid(row=row, column=col, sticky=E)
 
         col += 1
-        b = Button(frame, text=_("set"), command=self.tloSet, padx=2, pady=1)
-        b.grid(row=row, column=col, sticky=EW)
-        self.addWidget(b)
+        self.probeSensorThicknessVar = StringVar()
+        self.probeSensorThicknessVar.trace("w", lambda *_: ProbeCommonFrame.probeUpdate())
+        ProbeCommonFrame.probeSensorThickness = tkExtra.FloatEntry(
+            frame, background=tkExtra.GLOBAL_CONTROL_BACKGROUND, width=10,
+            textvariable=self.probeSensorThicknessVar
+        )
+        ProbeCommonFrame.probeSensorThickness.grid(row=row, column=col, sticky=W)
+        tkExtra.Balloon.set(
+            ProbeCommonFrame.probeSensor, _("Sensor Thickness (WZ)"))
+        self.addWidget(ProbeCommonFrame.probeSensorThickness)
+        ProbeCommonFrame.probeSensorThickness.bind("<Return>", self.probeUpdate)
+        ProbeCommonFrame.probeSensorThickness.bind("<KP_Enter>", self.probeUpdate)
 
         # ---
         # feed command
@@ -382,15 +416,47 @@ class ProbeCommonFrame(CNCRibbon.PageFrame):
         frame.grid_columnconfigure(1, weight=1)
         self.loadConfig()
 
+    # -----------------------------------------------------------------------
+    def calibrate_sensor(self, event=None):
+        lines = []
+        lines.append("g53 g0 z[toolprobez]")
+        lines.append("g53 g0 x[toolprobex] y[toolprobey]")
+        lines.append("g53 g0 z[mzsensor+tooldistance]")
+        if CNC.vars["fastprbfeed"]:
+            prb_reverse = {"2": "4", "3": "5", "4": "2", "5": "3"}
+            CNC.vars["prbcmdreverse"] = (
+                CNC.vars["prbcmd"][:-1] + prb_reverse[CNC.vars["prbcmd"][-1]]
+            )
+            currentFeedrate = CNC.vars["fastprbfeed"]
+            while currentFeedrate > CNC.vars["prbfeed"]:
+                lines.append("%wait")
+                lines.append(
+                    f"g91 [prbcmd] {CNC.fmt('f', currentFeedrate)} "
+                    + "z[mzsensor-mz-tooldistance]"
+                )
+                lines.append("%wait")
+                lines.append(
+                    f"[prbcmdreverse] {CNC.fmt('f', currentFeedrate)} "
+                    + "z[mzsensor-mz]"
+                )
+                currentFeedrate /= 10
+        lines.append("%wait")
+        lines.append("g91 [prbcmd] f[prbfeed] z[mzsensor-mz-tooldistance]")
+        lines.append("g4 p1")  # wait a sec
+        lines.append("%wait")
+        lines.append("%global mzsensor; mzsensor=mz")
+        lines.append("%update mzsensor")
+        lines.append("g91 g0 z[tooldistance]")
+        lines.append("g90")
+        self.app.run(lines=lines)
+        ProbeCommonFrame.probeSensor.set(CNC.vars["mzsensor"])
+
     # ------------------------------------------------------------------------
-    def tloSet(self, event=None):
+    def sensorSet(self, event=None):
         try:
-            CNC.vars["TLO"] = float(ProbeCommonFrame.tlo.get())
-            cmd = f"G43.1Z{ProbeCommonFrame.tlo.get()}"
-            self.sendGCode(cmd)
+            CNC.vars["mzsensor"] = float(ProbeCommonFrame.probeSensor.get())
         except Exception:
             pass
-        self.app.mcontrol.viewParameters()
 
     # ------------------------------------------------------------------------
     @staticmethod
@@ -401,27 +467,21 @@ class ProbeCommonFrame(CNCRibbon.PageFrame):
             CNC.vars["prbfeed"] = float(ProbeCommonFrame.probeFeed.get())
             CNC.vars["prbcmd"] = str(
                 ProbeCommonFrame.probeCmd.get().split()[0])
+            CNC.vars["mzsensor"] = float(ProbeCommonFrame.probeSensor.get())
+            CNC.vars["sensorheight"] = float(
+                ProbeCommonFrame.probeSensorThickness.get())
             return False
         except Exception:
             return True
-
-    # ------------------------------------------------------------------------
-    def updateTlo(self):
-        try:
-            if self.focus_get() is not ProbeCommonFrame.tlo:
-                state = ProbeCommonFrame.tlo.cget("state")
-                state = ProbeCommonFrame.tlo["state"] = NORMAL
-                ProbeCommonFrame.tlo.set(str(CNC.vars.get("TLO", "")))
-                state = ProbeCommonFrame.tlo["state"] = state
-        except Exception:
-            pass
 
     # -----------------------------------------------------------------------
     def saveConfig(self):
         Utils.setFloat("Probe",
                        "fastfeed", ProbeCommonFrame.fastProbeFeed.get())
         Utils.setFloat("Probe", "feed", ProbeCommonFrame.probeFeed.get())
-        Utils.setFloat("Probe", "tlo", ProbeCommonFrame.tlo.get())
+        Utils.setFloat("Probe", "mzsensor", ProbeCommonFrame.probeSensor.get())
+        Utils.setFloat("Probe", "sensorheight",
+                       ProbeCommonFrame.probeSensorThickness.get())
         Utils.setFloat("Probe", "cmd",
                        ProbeCommonFrame.probeCmd.get().split()[0])
 
@@ -429,12 +489,18 @@ class ProbeCommonFrame(CNCRibbon.PageFrame):
     def loadConfig(self):
         ProbeCommonFrame.fastProbeFeed.set(Utils.getFloat("Probe", "fastfeed"))
         ProbeCommonFrame.probeFeed.set(Utils.getFloat("Probe", "feed"))
-        ProbeCommonFrame.tlo.set(Utils.getFloat("Probe", "tlo"))
+        ProbeCommonFrame.probeSensor.set(Utils.getFloat("Probe", "mzsensor"))
+        ProbeCommonFrame.probeSensorThickness.set(
+                         Utils.getFloat("Probe", "sensorheight"))
         cmd = Utils.getStr("Probe", "cmd")
         for p in PROBE_CMD:
             if p.split()[0] == cmd:
                 ProbeCommonFrame.probeCmd.set(p)
                 break
+
+    # -----------------------------------------------------------------------
+    def getSensorMz(self):
+        ProbeCommonFrame.probeSensor.set(CNC.vars["mz"])
 
 
 # =============================================================================
@@ -1867,7 +1933,7 @@ class ToolGroup(CNCRibbon.ButtonGroup):
             self,
             "<<ToolCalibrate>>",
             image=Utils.icons["calibrate32"],
-            text=_("Calibrate"),
+            text=_("Update"),
             compound=TOP,
             width=48,
             background=Ribbon._BACKGROUND,
@@ -1876,8 +1942,8 @@ class ToolGroup(CNCRibbon.ButtonGroup):
         self.addWidget(b)
         tkExtra.Balloon.set(
             b,
-            _("Perform a single a tool change cycle to set the "
-              + "calibration field")
+            _("Perform a single tool probe to update the "
+              + "Tool Length field")
         )
 
         b = Ribbon.LabelButton(
@@ -1906,8 +1972,36 @@ class ToolFrame(CNCRibbon.PageFrame):
             self, text=_("Manual Tool Change"), foreground="DarkBlue")
         lframe.pack(side=TOP, fill=X)
 
-        # --- Tool policy ---
         row, col = 0, 0
+        # Display Current Tool
+        row += 1
+        Label(lframe, text=_("Current Tool:")).grid(row=row, column=col, sticky=E)
+
+        col += 1
+        self.oldTool = tkExtra.IntegerEntry(
+            lframe, background=tkExtra.GLOBAL_CONTROL_BACKGROUND, width=2
+        )
+        self.oldTool.set(CNC.vars["tool"])
+        self.oldTool.grid(row=row, column=col, sticky=E)
+        tkExtra.Balloon.set(self.oldTool, _("Current Tool number [T#]"))
+        self.addWidget(self.oldTool)
+
+        col += 1
+        Label(lframe, text=_("New Tool:")).grid(row=row, column=col, sticky=E)
+
+        col += 1
+        self.newTool = tkExtra.IntegerEntry(
+            lframe, background=tkExtra.GLOBAL_CONTROL_BACKGROUND, width=5
+        )
+        self.newTool.grid(row=row, column=col, sticky=E)
+        self.newTool.bind("<Return>", self.setTool)
+        self.newTool.bind("<KP_Enter>", self.setTool)
+        tkExtra.Balloon.set(self.newTool, _("Tool number [T#]"))
+        self.addWidget(self.newTool)
+
+        # --- Tool policy ---
+        row += 1
+        col = 0
         Label(lframe, text=_("Policy:")).grid(row=row, column=col, sticky=E)
         col += 1
         self.toolPolicy = tkExtra.Combobox(
@@ -2062,21 +2156,23 @@ class ToolFrame(CNCRibbon.PageFrame):
         row += 1
         col = 0
         Label(lframe,
-              text=_("Calibration:")).grid(row=row, column=col, sticky=E)
+              text=_("Tool Length:")).grid(row=row, column=col, sticky=E)
         col += 1
-        self.toolHeight = tkExtra.FloatEntry(
+        self.tlo = tkExtra.FloatEntry(
             lframe, background=tkExtra.GLOBAL_CONTROL_BACKGROUND, width=5
         )
-        self.toolHeight.grid(row=row, column=col, sticky=EW)
-        tkExtra.Balloon.set(self.toolHeight, _("Tool probe height"))
-        self.addWidget(self.toolHeight)
+        self.tlo.grid(row=row, column=col, sticky=EW)
+        tkExtra.Balloon.set(self.tlo, _("Tool Length Offset"))
+        self.addWidget(self.tlo)
+        self.tlo.set(float(CNC.vars["TLO"]))
 
         col += 1
         b = Button(lframe,
-                   text=_("Calibrate"), command=self.calibrate, padx=2, pady=1)
+                   text=_("Update"), command=self.probeToolLength,
+                   padx=2, pady=1)
         b.grid(row=row, column=col, sticky=EW)
         tkExtra.Balloon.set(
-            b, _("Perform a calibration probing to determine the height")
+            b, _("Perform a probe to update length of tool")
         )
         self.addWidget(b)
 
@@ -2106,8 +2202,6 @@ class ToolFrame(CNCRibbon.PageFrame):
         Utils.setFloat("Probe", "toolprobez", self.probeZ.get())
 
         Utils.setFloat("Probe", "tooldistance", self.probeDistance.get())
-        Utils.setFloat("Probe", "toolheight", self.toolHeight.get())
-        Utils.setFloat("Probe", "toolmz", CNC.vars.get("toolmz", 0.0))
 
     # -----------------------------------------------------------------------
     def loadConfig(self):
@@ -2120,11 +2214,9 @@ class ToolFrame(CNCRibbon.PageFrame):
         self.probeZ.set(Utils.getFloat("Probe", "toolprobez"))
 
         self.probeDistance.set(Utils.getFloat("Probe", "tooldistance"))
-        self.toolHeight.set(Utils.getFloat("Probe", "toolheight"))
         self.toolPolicy.set(
             TOOL_POLICY[Utils.getInt("Probe", "toolpolicy", 0)])
         self.toolWait.set(TOOL_WAIT[Utils.getInt("Probe", "toolwait", 1)])
-        CNC.vars["toolmz"] = Utils.getFloat("Probe", "toolmz")
         self.set()
 
     # -----------------------------------------------------------------------
@@ -2165,15 +2257,18 @@ class ToolFrame(CNCRibbon.PageFrame):
             )
             return
 
-        try:
-            CNC.vars["toolheight"] = float(self.toolHeight.get())
-        except Exception:
+
+    # ----------------------------------------------------------------------
+    def setTool(self, event=None):
+        tool = self.newTool.get()
+        if tool == "" or not tool.isdigit():
             messagebox.showerror(
-                _("Probe Tool Change Error"),
-                _("Invalid tool height or not calibrated"),
+                _("Tool Entry Error"),
+                _("Invalid tool entry"),
                 parent=self.winfo_toplevel(),
             )
-            return
+            return False
+        return True
 
     # -----------------------------------------------------------------------
     def check4Errors(self):
@@ -2198,7 +2293,7 @@ class ToolFrame(CNCRibbon.PageFrame):
 
     # -----------------------------------------------------------------------
     def setProbeParams(self, dummy=None):
-        print("probe chg handler")
+        print("Modified tool change probing location")
         CNC.vars["toolchangex"] = float(self.changeX.get())
         CNC.vars["toolchangey"] = float(self.changeY.get())
         CNC.vars["toolchangez"] = float(self.changeZ.get())
@@ -2222,14 +2317,22 @@ class ToolFrame(CNCRibbon.PageFrame):
         self.setProbeParams()
 
     # -----------------------------------------------------------------------
-    def updateTool(self):
-        state = self.toolHeight.cget("state")
-        self.toolHeight.config(state=NORMAL)
-        self.toolHeight.set(CNC.vars["toolheight"])
-        self.toolHeight.config(state=state)
+    def updateTLO(self, event=None):
+        state = self.tlo.cget("state")
+        self.tlo.config(state=NORMAL)
+        self.tlo.set(CNC.vars["TLO"])
+        self.tlo.config(state=state)
 
     # -----------------------------------------------------------------------
-    def calibrate(self, event=None):
+    def updateTool(self, event=None):
+        state = self.oldTool.cget("state")
+        self.oldTool.config(state=NORMAL)
+        self.oldTool.set(CNC.vars["tool"])
+        self.oldTool.config(state=state)
+        self.event_generate("<<StateTool>>")
+
+    # -----------------------------------------------------------------------
+    def probeToolLength(self, event=None):
         self.set()
         if self.check4Errors():
             return
@@ -2260,9 +2363,8 @@ class ToolFrame(CNCRibbon.PageFrame):
         lines.append("g91 [prbcmd] f[prbfeed] z[toolprobez-mz-tooldistance]")
         lines.append("g4 p1")  # wait a sec
         lines.append("%wait")
-        lines.append("%global toolheight; toolheight=wz")
-        lines.append("%global toolmz; toolmz=prbz")
-        lines.append("%update toolheight")
+        lines.append("%global TLO; TLO=mz-mzsensor")
+        lines.append("%update TLO")
         lines.append("g53 g0 z[toolchangez]")
         lines.append("g53 g0 x[toolchangex] y[toolchangey]")
         lines.append("g90")
@@ -2272,12 +2374,15 @@ class ToolFrame(CNCRibbon.PageFrame):
     # FIXME: Should be replaced with CNC.toolChange()
     # -----------------------------------------------------------------------
     def change(self, event=None):
+        tool = int(self.newTool.get())
         self.set()
         if self.check4Errors():
             return
-        lines = self.app.cnc.toolChange(0)
+        lines = self.app.cnc.toolChange(tool or 0)
         self.app.run(lines=lines)
-
+        CNC.vars["tool"] = tool
+        self.event_generate("<<ProbeTool>>")
+        self.event_generate("<<StateTool>>")
 
 # =============================================================================
 # Probe Page

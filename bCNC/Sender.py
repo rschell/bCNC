@@ -734,6 +734,7 @@ class Sender:
                 if CNC.vars["_OvChanged"]:
                     self.mcontrol.overrideSet()
 
+            if self.running: time.sleep(0.05)
             # Fetch new command to send if...
             if (
                 tosend is None

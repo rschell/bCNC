@@ -90,12 +90,18 @@ class _GenericController:
 
     # ----------------------------------------------------------------------
     def softReset(self, clearAlarm=True):
+        # remember and send all G commands except G43.1 which needs z length
+        G = " ".join([x for x in CNC.vars["G"] if x[0] == "G" and x != "G43.1"])
+        TLO = CNC.vars["TLO"]
         if self.master.serial:
             self.master.serial_write(b"\030")
         self.master.stopProbe()
         if clearAlarm:
             self.master._alarm = False
         CNC.vars["_OvChanged"] = True  # force a feed change if any
+        if G:
+            self.master.sendGCode(G)  # restore $G
+        self.setTLO(TLO)       # restore TLO
 
     # ----------------------------------------------------------------------
     def unlock(self, clearAlarm=True):
@@ -213,16 +219,9 @@ class _GenericController:
         self.master.serial_write(b"!")
         self.master.serial.flush()
         time.sleep(1)
-        # remember and send all G commands
-        G = " ".join([x for x in CNC.vars["G"] if x[0] == "G"])  # remember $G
-        TLO = CNC.vars["TLO"]
         self.softReset(False)  # reset controller
-        self.purgeControllerExtra()
         self.master.runEnded()
-        self.master.stopProbe()
-        if G:
-            self.master.sendGCode(G)  # restore $G
-        self.master.sendGCode(f"G43.1Z{TLO}")  # restore TLO
+        self.purgeControllerExtra()
         self.viewState()
         self.viewParameters()
 
@@ -288,15 +287,13 @@ class _GenericController:
 
         elif line[:4] == "Grbl" or line[:13] == "CarbideMotion":
             self.master.log.put((self.master.MSG_RECEIVE, line))
-            self.master._stop = True
-            del cline[:]  # After reset clear the buffer counters
-            del sline[:]
             CNC.vars["version"] = line.split()[1]
             # Detect controller
             if self.master.controller in ("GRBL0", "GRBL1"):
                 self.master.controllerSet(
                     "GRBL%d" % (int(CNC.vars["version"][0])))
-
+            if cline: del cline[0]
+            if sline: del sline[0]
         else:
             # We return false in order to tell that we can't parse this line
             # Sender will log the line in such case

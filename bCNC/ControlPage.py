@@ -1851,6 +1851,7 @@ class StateFrame(CNCRibbon.PageExLabelFrame):
         CNCRibbon.PageExLabelFrame.__init__(
             self, master, "State", _("State"), app)
         self._gUpdate = False
+        self.loadConfig()
 
         # State
         f = Frame(self())
@@ -1928,8 +1929,11 @@ class StateFrame(CNCRibbon.PageExLabelFrame):
         self.toolEntry = tkExtra.IntegerEntry(
             f, background=tkExtra.GLOBAL_CONTROL_BACKGROUND, width=5
         )
+        self.toolEntry.set(CNC.vars["tool"])
         self.toolEntry.grid(row=row, column=col, sticky=EW)
-        tkExtra.Balloon.set(self.toolEntry, _("Tool number [T#]"))
+        self.toolEntry.bind("<Return>", self.setTool)
+        self.toolEntry.bind("<KP_Enter>", self.setTool)
+        tkExtra.Balloon.set(self.toolEntry, _("Current Tool number [T#]"))
         self.addWidget(self.toolEntry)
 
         col += 1
@@ -2015,6 +2019,7 @@ class StateFrame(CNCRibbon.PageExLabelFrame):
         self.tlo.bind("<KP_Enter>", self.setTLO)
         tkExtra.Balloon.set(self.tlo, _("Tool length offset [G43.1#]"))
         self.addWidget(self.tlo)
+        self.tlo.set(float(CNC.vars["TLO"]))
 
         col += 1
         b = Button(f, text=_("set"), command=self.setTLO, padx=1, pady=1)
@@ -2167,6 +2172,18 @@ class StateFrame(CNCRibbon.PageExLabelFrame):
         f.grid_columnconfigure(1, weight=1)
 
     # ----------------------------------------------------------------------
+    def saveConfig(self):
+        Utils.setInt("State", "tool", CNC.vars.get("tool", 0))
+        Utils.setFloat("State", "tlo", CNC.vars.get("TLO", 0.0))
+
+    # ----------------------------------------------------------------------
+    def loadConfig(self):
+        CNC.vars["tool"] = Utils.getInt("State", "tool")
+        CNC.vars["TLO"] = Utils.getFloat("State", "tlo")
+        self.event_generate("<<ProbeTool>>")
+        self.event_generate("<<ProbeTLO>>")
+
+    # ----------------------------------------------------------------------
     def overrideChange(self, event=None):
         n = self.overrideCombo.get()
         c = self.override.get()
@@ -2234,14 +2251,37 @@ class StateFrame(CNCRibbon.PageExLabelFrame):
         try:
             tlo = float(self.tlo.get())
             self.app.mcontrol.setTLO(tlo)
+            CNC.vars["TLO"] = tlo
             self.app.mcontrol.viewParameters()
             self.event_generate("<<CanvasFocus>>")
+            self.event_generate("<<ProbeTLO>>")
         except ValueError:
-            pass
+            return False
+        return True
 
     # ----------------------------------------------------------------------
     def setTool(self, event=None):
-        pass
+        try:
+            CNC.vars["tool"] = int(self.toolEntry.get())
+            self.event_generate("<<ProbeTool>>")
+            self.event_generate("<<CanvasFocus>>")
+        except ValueError:
+            return False
+        return True
+
+    # ------------------------------------------------------------------------
+    def updateTool(self, event=None):
+        state = self.toolEntry.cget("state")
+        self.toolEntry.config(state=NORMAL)
+        self.toolEntry.set(CNC.vars["tool"])
+        self.toolEntry.config(state=state)
+
+    # ------------------------------------------------------------------------
+    def updateTLO(self, event=None):
+        state = self.tlo.cget("state")
+        self.tlo.config(state=NORMAL)
+        self.tlo.set(CNC.vars["TLO"])
+        self.tlo.config(state=state)
 
     # ----------------------------------------------------------------------
     def spindleControl(self, event=None):
@@ -2303,11 +2343,11 @@ class StateFrame(CNCRibbon.PageExLabelFrame):
             self.feedMode.set(FEED_MODE[CNC.vars["feedmode"]])
             self.spindle.set(CNC.vars["spindle"] == "M3")
             self.spindleSpeed.set(int(CNC.vars["rpm"]))
-            self.toolEntry.set(CNC.vars["tool"])
+            self.toolEntry.set(int(CNC.vars["tool"]))
             self.units.set(UNITS[CNC.vars["units"]])
             self.distance.set(DISTANCE_MODE[CNC.vars["distance"]])
             self.plane.set(PLANE[CNC.vars["plane"]])
-            self.tlo.set(str(CNC.vars["TLO"]))
+            self.tlo.set(float(CNC.vars["TLO"]))
             self.g92.config(text=str(CNC.vars["G92"]))
         except KeyError:
             pass

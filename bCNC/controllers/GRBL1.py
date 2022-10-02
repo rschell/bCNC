@@ -237,7 +237,7 @@ class Controller(_GenericGRBL):
             )
             self.master._probeUpdate = True
             CNC.vars[word[0]] = word[1:]
-        if word[0] == "G92":
+        elif word[0] == "G92":
             CNC.vars["G92X"] = float(word[1])
             CNC.vars["G92Y"] = float(word[2])
             CNC.vars["G92Z"] = float(word[3])
@@ -249,13 +249,13 @@ class Controller(_GenericGRBL):
                 CNC.vars["G92C"] = float(word[6])
             CNC.vars[word[0]] = word[1:]
             self.master._gUpdate = True
-        if word[0] == "G28":
+        elif word[0] == "G28":
             CNC.vars["G28X"] = float(word[1])
             CNC.vars["G28Y"] = float(word[2])
             CNC.vars["G28Z"] = float(word[3])
             CNC.vars[word[0]] = word[1:]
             self.master._gUpdate = True
-        if word[0] == "G30":
+        elif word[0] == "G30":
             CNC.vars["G30X"] = float(word[1])
             CNC.vars["G30Y"] = float(word[2])
             CNC.vars["G30Z"] = float(word[3])
@@ -266,7 +266,9 @@ class Controller(_GenericGRBL):
             CNC.updateG()
             self.master._gUpdate = True
         elif word[0] == "TLO":
-            CNC.vars[word[0]] = word[1]
+            idx = -1
+            if len(word) > 4: idx = 3
+            CNC.vars["TLO"] = word[idx]
             self.master._probeUpdate = True
             self.master._gUpdate = True
         else:
