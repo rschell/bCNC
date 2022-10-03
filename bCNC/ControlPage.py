@@ -2624,6 +2624,7 @@ class StateFrame(CNCRibbon.PageExLabelFrame):
         try:
             feed = float(self.feedRate.get())
             self.sendGCode(f"F{feed:g}")
+            CNC.vars["feed"] = feed
             self.event_generate("<<CanvasFocus>>")
         except ValueError:
             pass
