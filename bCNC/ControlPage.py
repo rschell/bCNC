@@ -1250,8 +1250,10 @@ class ControlFrame(CNCRibbon.PageExLabelFrame):
             Utils.setStr("Control", "zstep", zstep)
         else:
             Utils.setFloat("Control", "zstep", zstep)
-        Utils.setFloat("Control", "steplist", self.steplist)
-        Utils.setFloat("Control", "zsteplist", self.zsteplist)
+        Utils.setStr("Control", "steplist",
+                    " ".join([str(i) for i in self.steplist]))
+        Utils.setStr("Control", "zsteplist",
+                    " ".join([str(i) for i in self.zsteplist]))
 
     # ----------------------------------------------------------------------
     # Jogging
