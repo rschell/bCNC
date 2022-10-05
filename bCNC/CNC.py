@@ -749,7 +749,6 @@ class CNC:
         "thickness": 5.0,
         "stepover": 40.0,
         "PRB": None,
-        "TLO": 0.0,
         "version": "",
         "controller": "",
         "running": False,
