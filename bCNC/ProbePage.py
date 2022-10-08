@@ -354,11 +354,11 @@ class ProbeCommonFrame(CNCRibbon.PageFrame):
         tkExtra.Balloon.set(
             ProbeCommonFrame.tlo, _("Set tool offset for probing"))
         self.addWidget(ProbeCommonFrame.tlo)
-        self.tlo.bind("<Return>", self.tloSet)
-        self.tlo.bind("<KP_Enter>", self.tloSet)
+        self.tlo.bind("<Return>", self.setTLO)
+        self.tlo.bind("<KP_Enter>", self.setTLO)
 
         col += 1
-        b = Button(frame, text=_("set"), command=self.tloSet, padx=2, pady=1)
+        b = Button(frame, text=_("set"), command=self.setTLO, padx=2, pady=1)
         b.grid(row=row, column=col, sticky=EW)
         self.addWidget(b)
 
@@ -384,14 +384,17 @@ class ProbeCommonFrame(CNCRibbon.PageFrame):
         self.loadConfig()
 
     # ------------------------------------------------------------------------
-    def tloSet(self, event=None):
+    def setTLO(self, event=None):
         try:
             CNC.vars["TLO"] = float(ProbeCommonFrame.tlo.get())
-            cmd = f"G43.1Z{ProbeCommonFrame.tlo.get()}"
-            self.sendGCode(cmd)
+            cmd = f'G43.1Z{CNC.vars["TLO"]}'
+            # during initialization this needs to be deferred until grbl
+            # is ready
+            self.sendGCode(cmd, True)
         except Exception:
             pass
         self.app.mcontrol.viewParameters()
+        self.event_generate("<<ControlTLO>>")
 
     # ------------------------------------------------------------------------
     @staticmethod
@@ -407,15 +410,11 @@ class ProbeCommonFrame(CNCRibbon.PageFrame):
             return True
 
     # ------------------------------------------------------------------------
-    def updateTlo(self):
-        try:
-            if self.focus_get() is not ProbeCommonFrame.tlo:
-                state = ProbeCommonFrame.tlo.cget("state")
-                state = ProbeCommonFrame.tlo["state"] = NORMAL
-                ProbeCommonFrame.tlo.set(str(CNC.vars.get("TLO", "")))
-                state = ProbeCommonFrame.tlo["state"] = state
-        except Exception:
-            pass
+    def updateTLO(self, event=None):
+        state = self.tlo.cget("state")
+        self.tlo.config(state=NORMAL)
+        self.tlo.set(CNC.vars["TLO"])
+        self.tlo.config(state=state)
 
     # -----------------------------------------------------------------------
     def saveConfig(self):
@@ -431,6 +430,9 @@ class ProbeCommonFrame(CNCRibbon.PageFrame):
         ProbeCommonFrame.fastProbeFeed.set(Utils.getFloat("Probe", "fastfeed"))
         ProbeCommonFrame.probeFeed.set(Utils.getFloat("Probe", "feed"))
         ProbeCommonFrame.tlo.set(Utils.getFloat("Probe", "tlo"))
+        # force update TLO display in grbl and status frame
+        self.setTLO()
+        self.updateTLO()
         cmd = Utils.getStr("Probe", "cmd")
         for p in PROBE_CMD:
             if p.split()[0] == cmd:
@@ -2077,7 +2079,7 @@ class ToolFrame(CNCRibbon.PageFrame):
                    text=_("Calibrate"), command=self.calibrate, padx=2, pady=1)
         b.grid(row=row, column=col, sticky=EW)
         tkExtra.Balloon.set(
-            b, _("Perform a calibration probing to determine the height")
+            b, _("Perform a probe to update Tool Length Offset")
         )
         self.addWidget(b)
 
@@ -2273,10 +2275,19 @@ class ToolFrame(CNCRibbon.PageFrame):
     # FIXME: Should be replaced with CNC.toolChange()
     # -----------------------------------------------------------------------
     def change(self, event=None):
+        tool = self.newTool.get()
+        if tool == "" or not tool.isdigit():
+            messagebox.showerror(
+                _("Tool Entry Error"),
+                _("Invalid New Tool entry"),
+                parent=self.winfo_toplevel(),
+            )
+            return False
+        tool = int(tool)
         self.set()
         if self.check4Errors():
             return
-        lines = self.app.cnc.toolChange(0)
+        lines = self.app.cnc.toolChange(tool)
         self.app.run(lines=lines)
 
 

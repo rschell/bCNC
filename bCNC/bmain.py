@@ -407,6 +407,9 @@ class Application(Tk, Sender):
         self.bind("<<ToolCalibrate>>", frame.calibrate)
         self.bind("<<ToolChange>>", frame.change)
 
+        self.bind("<<ProbeTLO>>", Page.frames["ProbeCommon"].updateTLO)
+        self.bind("<<ControlTLO>>", self.gstate.updateTLO)
+
         self.bind("<<AutolevelMargins>>", self.autolevel.getMargins)
         self.bind("<<AutolevelZero>>", self.autolevel.setZero)
         self.bind("<<AutolevelClear>>", self.autolevel.clear)
@@ -2795,7 +2798,7 @@ class Application(Tk, Sender):
         # Update probe and draw point
         if self._probeUpdate:
             Page.frames["Probe:Probe"].updateProbe()
-            Page.frames["ProbeCommon"].updateTlo()
+            Page.frames["ProbeCommon"].updateTLO()
             self.canvas.drawProbe()
             self._probeUpdate = False
 
@@ -2804,7 +2807,8 @@ class Application(Tk, Sender):
             if self._update == "toolheight":
                 Page.frames["Probe:Tool"].updateTool()
             elif self._update == "TLO":
-                Page.frames["ProbeCommon"].updateTlo()
+                Page.frames["ProbeCommon"].updateTLO()
+                Page.frames["State"].updateTLO()
             self._update = None
 
         if self.running:

@@ -724,7 +724,6 @@ class CNC:
         "arc": "G91.1",
         "units": "G20",
         "cutter": "",
-        "tlo": "",
         "program": "M0",
         "spindle": "M5",
         "coolant": "M9",
@@ -1855,11 +1854,9 @@ class CNC:
         lines = []
         # remember state and populate variables,
         # FIXME: move to ./controllers/_GenericController.py
-        lines.append(
-            "$g"
-        )
+        lines.append("$g")  # remember state
+        lines.append("$#")  # populate GRBL parameters
         lines.append("m5")  # stop spindle
-        lines.append("%wait")
         lines.append("%_x,_y,_z = wx,wy,wz")  # remember position
         lines.append("g53 g0 z[toolchangez]")
         lines.append("g53 g0 x[toolchangex] y[toolchangey]")
@@ -1911,9 +1908,9 @@ class CNC:
                 # Modify the tool length, update the TLO
                 lines.append("g4 p1")  # wait a sec to get the probe info
                 lines.append("%wait")
-                lines.append("%global TLO; TLO=prbz-toolmz")
-                lines.append("g43.1z[TLO]")
+                lines.append("%global TLO; TLO=wz-toolheight")
                 lines.append("%update TLO")
+                lines.append("g43.1z[TLO]")
 
             lines.append("g53 g0 z[toolchangez]")
             lines.append("g53 g0 x[toolchangex] y[toolchangey]")

@@ -2637,6 +2637,7 @@ class StateFrame(CNCRibbon.PageExLabelFrame):
             CNC.vars["TLO"] = tlo
             self.app.mcontrol.viewParameters()
             self.event_generate("<<CanvasFocus>>")
+            self.event_generate("<<ProbeTLO>>")
         except ValueError:
             return False
         return True
@@ -2644,6 +2645,15 @@ class StateFrame(CNCRibbon.PageExLabelFrame):
     # ----------------------------------------------------------------------
     def setTool(self, event=None):
         pass
+
+    # ------------------------------------------------------------------------
+    def updateTLO(self, event=None):
+        if self._gUpdate:
+            return
+        state = self.tlo.cget("state")
+        self.tlo.config(state=NORMAL)
+        self.tlo.set(CNC.vars["TLO"])
+        self.tlo.config(state=state)
 
     # ----------------------------------------------------------------------
     def spindleControl(self, event=None):
@@ -2709,7 +2719,7 @@ class StateFrame(CNCRibbon.PageExLabelFrame):
             self.units.set(UNITS[CNC.vars["units"]])
             self.distance.set(DISTANCE_MODE[CNC.vars["distance"]])
             self.plane.set(PLANE[CNC.vars["plane"]])
-            self.tlo.set(str(CNC.vars["TLO"]))
+            self.tlo.set(float(CNC.vars["TLO"]))
             self.g92.config(text=str(CNC.vars["G92"]))
         except KeyError:
             pass
