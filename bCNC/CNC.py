@@ -786,7 +786,8 @@ class CNC:
             elif g[0] == "S":
                 CNC.vars["rpm"] = float(g[1:])
             elif g[0] == "T":
-                CNC.vars["tool"] = int(g[1:])
+                # accept value only if tool change managed by controller
+                if CNC.toolPolicy <= 1: CNC.vars["tool"] = int(g[1:] or 0)
             else:
                 var = MODAL_MODES.get(g)
                 if var is not None:
@@ -923,6 +924,10 @@ class CNC:
             CNC.spindledelay = int(config.get(section, "spindledelay"))
         except Exception:
             pass
+        try:
+            CNC.vars["tool"] = int(config.get(section, "tool"))
+        except Exception:
+            pass
 
         try:
             CNC.startup = config.get(section, "startup")
@@ -1002,7 +1007,7 @@ class CNC:
         self.unit = 1.0
         self.mval = 0
         self.lval = 1
-        self.tool = 0
+        self.tool = CNC.vars["tool"]
         self._lastTool = None
 
         self.absolute = True  # G90/G91     absolute/relative motion
@@ -1840,14 +1845,18 @@ class CNC:
     # ----------------------------------------------------------------------
     # code to change manually tool
     # ----------------------------------------------------------------------
-    def toolChange(self, tool=None):
-        if tool is not None:
+    def toolChange(self, newtool=None):
+        print("toolChange tool=", newtool, type(newtool))
+        print("toolChange self.tool=", self.tool, type(self.tool))
+        print("toolChange self._lastTool=", self._lastTool, type(self._lastTool))
+        if newtool is not None:
             # Force a change
-            self.tool = tool
+            self.tool = newtool
             self._lastTool = None
 
         # check if it is the same tool
         if self.tool is None or self.tool == self._lastTool:
+            print("tool change not required, requested tool = current tool")
             return []
 
         # create the necessary code
@@ -1864,9 +1873,9 @@ class CNC:
 
         if CNC.comment:
             lines.append(
-                f"%msg Tool change T{int(self.tool):02} ({CNC.comment})")
+                f"%msg Tool change T{int(newtool):02} ({CNC.comment})")
         else:
-            lines.append(f"%msg Tool change T{int(self.tool):02}")
+            lines.append(f"%msg Tool change T{int(newtool):02}")
         lines.append("m0")  # feed hold
 
         if CNC.toolPolicy < 4:
@@ -1920,6 +1929,9 @@ class CNC:
             lines.append("%msg Restart spindle")
             lines.append("m0")  # feed hold
 
+        # Done with tool change update displays
+        lines.append("%global tool; tool=newtool")
+        lines.append("%update tool")
         # restore state
         lines.append("g90")  # restore mode
         lines.append("g0 x[_x] y[_y]")  # ... x,y position
@@ -1927,8 +1939,9 @@ class CNC:
         lines.append("f[feed] [spindle]")  # ... feed and spindle
         lines.append("g4 p[CNC.spindledelay]")  # wait Xs for spindle to speed up
 
-        # remember present tool
         self._lastTool = self.tool
+        # remember present tool
+        CNC.vars["tool"] = self.tool
         return lines
 
     # ----------------------------------------------------------------------
@@ -5250,7 +5263,8 @@ class GCode:
                         elif CNC.toolPolicy == 1:
                             skip = True  # skip whole line
                         elif CNC.toolPolicy >= 2:
-                            expand = CNC.compile(self.cnc.toolChange())
+                            expand = CNC.compile(self.cnc.toolChange(self.tool))
+                            CNC.vars["tool"] = self.tool
                     self.cnc.motionEnd()
 
                 if expand is not None:

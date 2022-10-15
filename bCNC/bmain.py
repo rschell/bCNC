@@ -408,7 +408,9 @@ class Application(Tk, Sender):
         self.bind("<<ToolChange>>", frame.change)
 
         self.bind("<<ProbeTLO>>", Page.frames["ProbeCommon"].updateTLO)
-        self.bind("<<ControlTLO>>", self.gstate.updateTLO)
+        self.bind("<<StateTLO>>", self.gstate.updateTLO)
+        self.bind("<<ProbeTool>>", frame.updateTool)
+        self.bind("<<StateTool>>", self.gstate.updateTool)
 
         self.bind("<<AutolevelMargins>>", self.autolevel.getMargins)
         self.bind("<<AutolevelZero>>", self.autolevel.setZero)
@@ -2805,7 +2807,10 @@ class Application(Tk, Sender):
         # Update any possible variable?
         if self._update:
             if self._update == "toolheight":
+                Page.frames["Probe:Tool"].updateToolHeight()
+            elif self._update == "tool":
                 Page.frames["Probe:Tool"].updateTool()
+                Page.frames["State"].updateTool()
             elif self._update == "TLO":
                 Page.frames["ProbeCommon"].updateTLO()
                 Page.frames["State"].updateTLO()

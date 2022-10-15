@@ -2327,8 +2327,11 @@ class StateFrame(CNCRibbon.PageExLabelFrame):
         self.toolEntry = tkExtra.IntegerEntry(
             f, background=tkExtra.GLOBAL_CONTROL_BACKGROUND, width=5
         )
+        self.toolEntry.set(CNC.vars["tool"])
         self.toolEntry.grid(row=row, column=col, sticky=EW)
-        tkExtra.Balloon.set(self.toolEntry, _("Tool number [T#]"))
+        self.toolEntry.bind("<Return>", self.setTool)
+        self.toolEntry.bind("<KP_Enter>", self.setTool)
+        tkExtra.Balloon.set(self.toolEntry, _("Current Tool number [T#]"))
         self.addWidget(self.toolEntry)
 
         col += 1
@@ -2644,12 +2647,20 @@ class StateFrame(CNCRibbon.PageExLabelFrame):
 
     # ----------------------------------------------------------------------
     def setTool(self, event=None):
-        pass
+        CNC.vars["tool"] = int(self.toolEntry.get())
+        self.event_generate("<<ProbeTool>>")
+        self.event_generate("<<CanvasFocus>>")
+        return True
+
+    # ------------------------------------------------------------------------
+    def updateTool(self, event=None):
+        state = self.toolEntry.cget("state")
+        self.toolEntry.config(state=NORMAL)
+        self.toolEntry.set(CNC.vars["tool"])
+        self.toolEntry.config(state=state)
 
     # ------------------------------------------------------------------------
     def updateTLO(self, event=None):
-        if self._gUpdate:
-            return
         state = self.tlo.cget("state")
         self.tlo.config(state=NORMAL)
         self.tlo.set(CNC.vars["TLO"])
@@ -2715,7 +2726,6 @@ class StateFrame(CNCRibbon.PageExLabelFrame):
             self.feedMode.set(FEED_MODE[CNC.vars["feedmode"]])
             self.spindle.set(CNC.vars["spindle"] == "M3")
             self.spindleSpeed.set(int(CNC.vars["rpm"]))
-            self.toolEntry.set(CNC.vars["tool"])
             self.units.set(UNITS[CNC.vars["units"]])
             self.distance.set(DISTANCE_MODE[CNC.vars["distance"]])
             self.plane.set(PLANE[CNC.vars["plane"]])

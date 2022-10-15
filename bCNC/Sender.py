@@ -735,12 +735,13 @@ class Sender:
                 if CNC.vars["_OvChanged"]:
                     self.mcontrol.overrideSet()
 
+            if self.running: time.sleep(0.05)
             # Fetch new command to send if...
             if (
                 tosend is None
                 and not self.sio_wait
                 and not self._pause
-                and self.queue.qsize() > 0
+                and (self.queue.qsize() > 0 or len(self._postInit) > 0)
             ):
                 try:
                     tosend = self.queue.get_nowait()

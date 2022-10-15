@@ -1909,8 +1909,36 @@ class ToolFrame(CNCRibbon.PageFrame):
             self, text=_("Manual Tool Change"), foreground="DarkBlue")
         lframe.pack(side=TOP, fill=X)
 
-        # --- Tool policy ---
         row, col = 0, 0
+        # Display Current Tool
+        row += 1
+        Label(lframe, text=_("Current Tool:")).grid(row=row, column=col, sticky=E)
+
+        col += 1
+        self.oldTool = tkExtra.IntegerEntry(
+            lframe, background=tkExtra.GLOBAL_CONTROL_BACKGROUND, width=2
+        )
+        self.oldTool.set(CNC.vars["tool"])
+        self.oldTool.grid(row=row, column=col, sticky=E)
+        tkExtra.Balloon.set(self.oldTool, _("Current Tool number [T#]"))
+        self.addWidget(self.oldTool)
+
+        col += 1
+        Label(lframe, text=_("New Tool:")).grid(row=row, column=col, sticky=E)
+
+        col += 1
+        self.newTool = tkExtra.IntegerEntry(
+            lframe, background=tkExtra.GLOBAL_CONTROL_BACKGROUND, width=5
+        )
+        self.newTool.grid(row=row, column=col, sticky=E)
+        self.newTool.bind("<Return>", self.setTool)
+        self.newTool.bind("<KP_Enter>", self.setTool)
+        tkExtra.Balloon.set(self.newTool, _("Tool number [T#]"))
+        self.addWidget(self.newTool)
+
+        # --- Tool policy ---
+        row += 1
+        col = 0
         Label(lframe, text=_("Policy:")).grid(row=row, column=col, sticky=E)
         col += 1
         self.toolPolicy = tkExtra.Combobox(
@@ -2112,6 +2140,8 @@ class ToolFrame(CNCRibbon.PageFrame):
         Utils.setFloat("Probe", "toolheight", self.toolHeight.get())
         Utils.setFloat("Probe", "toolmz", CNC.vars.get("toolmz", 0.0))
 
+        Utils.setInt("CNC", "tool", self.oldTool.get())
+
     # -----------------------------------------------------------------------
     def loadConfig(self):
         self.changeX.set(Utils.getFloat("Probe", "toolchangex"))
@@ -2178,6 +2208,19 @@ class ToolFrame(CNCRibbon.PageFrame):
             )
             return
 
+
+    # ----------------------------------------------------------------------
+    def setTool(self, event=None):
+        tool = self.newTool.get()
+        if tool == "" or not tool.isdigit():
+            messagebox.showerror(
+                _("Tool Entry Error"),
+                _("Invalid tool entry"),
+                parent=self.winfo_toplevel(),
+            )
+            return False
+        return True
+
     # -----------------------------------------------------------------------
     def check4Errors(self):
         if CNC.vars["tooldistance"] <= 0.0:
@@ -2225,11 +2268,19 @@ class ToolFrame(CNCRibbon.PageFrame):
         self.setProbeParams()
 
     # -----------------------------------------------------------------------
-    def updateTool(self):
+    def updateToolHeight(self, event=None):
         state = self.toolHeight.cget("state")
         self.toolHeight.config(state=NORMAL)
         self.toolHeight.set(CNC.vars["toolheight"])
         self.toolHeight.config(state=state)
+
+    # -----------------------------------------------------------------------
+    def updateTool(self, event=None):
+        state = self.oldTool.cget("state")
+        self.oldTool.config(state=NORMAL)
+        self.oldTool.set(CNC.vars["tool"])
+        self.oldTool.config(state=state)
+        self.event_generate("<<StateTool>>")
 
     # -----------------------------------------------------------------------
     def calibrate(self, event=None):
@@ -2289,7 +2340,9 @@ class ToolFrame(CNCRibbon.PageFrame):
             return
         lines = self.app.cnc.toolChange(tool)
         self.app.run(lines=lines)
-
+        CNC.vars["tool"] = tool
+        self.event_generate("<<ProbeTool>>")
+        self.event_generate("<<StateTool>>")
 
 # =============================================================================
 # Probe Page
