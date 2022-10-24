@@ -1487,7 +1487,7 @@ class AutolevelFrame(CNCRibbon.PageFrame):
     def clear(self, event=None):
         ans = messagebox.askquestion(
             _("Delete autolevel information"),
-            _("Do you want to delete all autolevel in formation?"),
+            _("Do you want to delete all autolevel information?"),
             parent=self.winfo_toplevel(),
         )
         if ans != messagebox.YES:
