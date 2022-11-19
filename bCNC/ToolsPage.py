@@ -650,6 +650,7 @@ class Config(_Base):
             ("startup", "str", "G90", _("Start up")),
             ("spindlemin", "int", 0, _("Spindle min (RPM)")),
             ("spindlemax", "int", 12000, _("Spindle max (RPM)")),
+            ("spindledelay", "int", 5, _("Spindle delay (sec)")),
             ("drozeropad", "int", 0, _("DRO Zero padding")),
             ("header", "text", "", _("Header gcode")),
             ("footer", "text", "", _("Footer gcode")),

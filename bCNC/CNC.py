@@ -681,6 +681,9 @@ class CNC:
     stdexpr = False  # standard way of defining expressions with []
     comment = ""  # last parsed comment
     developer = False
+    spindlemin = 0
+    spindlemax = 1000
+    spindledelay = 5
     drozeropad = 0
     vars = {
         "prbx": 0.0,
@@ -906,6 +909,19 @@ class CNC:
             pass
         try:
             CNC.drozeropad = int(config.get(section, "drozeropad"))
+        except Exception:
+            pass
+
+        try:
+            CNC.spindlemin = int(config.get(section, "spindlemin"))
+        except Exception:
+            pass
+        try:
+            CNC.spindlemax = int(config.get(section, "spindlemax"))
+        except Exception:
+            pass
+        try:
+            CNC.spindledelay = int(config.get(section, "spindledelay"))
         except Exception:
             pass
 
@@ -1912,7 +1928,7 @@ class CNC:
         lines.append("g0 x[_x] y[_y]")  # ... x,y position
         lines.append("g0 z[_z]")  # ... z position
         lines.append("f[feed] [spindle]")  # ... feed and spindle
-        lines.append("g4 p5")  # wait 5s for spindle to speed up
+        lines.append("g4 p[CNC.spindledelay]")  # wait Xs for spindle to speed up
 
         # remember present tool
         self._lastTool = self.tool
