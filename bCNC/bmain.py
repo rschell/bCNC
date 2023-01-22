@@ -404,10 +404,10 @@ class Application(Tk, Sender):
         self.bind("<<SetWPOS>>", self.canvas.setActionWPOS)
 
         frame = Page.frames["Probe:Tool"]
-        self.bind("<<ToolCalibrate>>", frame.calibrate)
+        self.bind("<<ToolCalibrate>>", frame.probeToolLength)
         self.bind("<<ToolChange>>", frame.change)
 
-        self.bind("<<ProbeTLO>>", Page.frames["ProbeCommon"].updateTLO)
+        self.bind("<<ProbeTLO>>", frame.updateTLO)
         self.bind("<<StateTLO>>", self.gstate.updateTLO)
         self.bind("<<ProbeTool>>", frame.updateTool)
         self.bind("<<StateTool>>", self.gstate.updateTool)
@@ -2800,19 +2800,17 @@ class Application(Tk, Sender):
         # Update probe and draw point
         if self._probeUpdate:
             Page.frames["Probe:Probe"].updateProbe()
-            Page.frames["ProbeCommon"].updateTLO()
+            Page.frames["Probe:Tool"].updateTLO()
             self.canvas.drawProbe()
             self._probeUpdate = False
 
         # Update any possible variable?
         if self._update:
-            if self._update == "toolheight":
-                Page.frames["Probe:Tool"].updateToolHeight()
-            elif self._update == "tool":
+            if self._update == "tool":
                 Page.frames["Probe:Tool"].updateTool()
                 Page.frames["State"].updateTool()
             elif self._update == "TLO":
-                Page.frames["ProbeCommon"].updateTLO()
+                Page.frames["Probe:Tool"].updateTLO()
                 Page.frames["State"].updateTLO()
             self._update = None
 

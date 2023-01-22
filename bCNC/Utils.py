@@ -509,7 +509,7 @@ def addException():
             # FIXME: self outside of Class
             ReportDialog(self.widget)  # noqa: F821 - see fixme
     except Exception:
-        logger.error(str(sys.exc_info()))
+        bCNClogger.error(str(sys.exc_info()))
 
 
 # =============================================================================

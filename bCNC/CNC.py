@@ -716,6 +716,8 @@ class CNC:
         "_camwy": 0.0,
         "G": [],
         "TLO": 0.0,
+        "mzsensor": 0.0,
+        "sensorheight": 0.0,
         "motion": "G0",
         "WCS": "G54",
         "plane": "G17",
@@ -922,10 +924,6 @@ class CNC:
             pass
         try:
             CNC.spindledelay = int(config.get(section, "spindledelay"))
-        except Exception:
-            pass
-        try:
-            CNC.vars["tool"] = int(config.get(section, "tool"))
         except Exception:
             pass
 
@@ -1846,9 +1844,6 @@ class CNC:
     # code to change manually tool
     # ----------------------------------------------------------------------
     def toolChange(self, newtool=None):
-        print("toolChange tool=", newtool, type(newtool))
-        print("toolChange self.tool=", self.tool, type(self.tool))
-        print("toolChange self._lastTool=", self._lastTool, type(self._lastTool))
         if newtool is not None:
             # Force a change
             self.tool = newtool
@@ -1910,14 +1905,14 @@ class CNC:
                 # Adjust the current WCS to fit to the tool
                 # FIXME could be done dynamically in the code
                 p = WCS.index(CNC.vars["WCS"]) + 1
-                lines.append(f"g10l20p{int(p)} z[toolheight]")
+                lines.append(f"g10l20p{int(p)} z[sensorheight]")
                 lines.append("%wait")
 
             elif CNC.toolPolicy == 3:
                 # Modify the tool length, update the TLO
                 lines.append("g4 p1")  # wait a sec to get the probe info
                 lines.append("%wait")
-                lines.append("%global TLO; TLO=wz-toolheight")
+                lines.append("%global TLO; TLO=prbz-mzsensor")
                 lines.append("%update TLO")
                 lines.append("g43.1z[TLO]")
 

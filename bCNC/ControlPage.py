@@ -2250,6 +2250,7 @@ class StateFrame(CNCRibbon.PageExLabelFrame):
         CNCRibbon.PageExLabelFrame.__init__(
             self, master, "State", _("State"), app)
         self._gUpdate = False
+        self.loadConfig()
 
         # State
         f = Frame(self())
@@ -2417,6 +2418,7 @@ class StateFrame(CNCRibbon.PageExLabelFrame):
         self.tlo.bind("<KP_Enter>", self.setTLO)
         tkExtra.Balloon.set(self.tlo, _("Tool length offset [G43.1#]"))
         self.addWidget(self.tlo)
+        self.tlo.set(float(CNC.vars["TLO"]))
 
         col += 1
         b = Button(f, text=_("set"), command=self.setTLO, padx=1, pady=1)
@@ -2569,6 +2571,17 @@ class StateFrame(CNCRibbon.PageExLabelFrame):
         f.grid_columnconfigure(1, weight=1)
 
     # ----------------------------------------------------------------------
+    def saveConfig(self):
+        Utils.setInt("State", "tool", CNC.vars.get("tool", 0))
+        Utils.setFloat("State", "tlo", CNC.vars.get("TLO", 0.0))
+
+    # ----------------------------------------------------------------------
+    def loadConfig(self):
+        CNC.vars["tool"] = Utils.getInt("State", "tool")
+        CNC.vars["TLO"] = Utils.getFloat("State", "tlo")
+        self.event_generate("<<ProbeTool>>")
+
+    # ----------------------------------------------------------------------
     def overrideChange(self, event=None):
         n = self.overrideCombo.get()
         c = self.override.get()
@@ -2647,9 +2660,12 @@ class StateFrame(CNCRibbon.PageExLabelFrame):
 
     # ----------------------------------------------------------------------
     def setTool(self, event=None):
-        CNC.vars["tool"] = int(self.toolEntry.get())
-        self.event_generate("<<ProbeTool>>")
-        self.event_generate("<<CanvasFocus>>")
+        try:
+            CNC.vars["tool"] = int(self.toolEntry.get())
+            self.event_generate("<<ProbeTool>>")
+            self.event_generate("<<CanvasFocus>>")
+        except ValueError:
+            return False
         return True
 
     # ------------------------------------------------------------------------
@@ -2729,6 +2745,7 @@ class StateFrame(CNCRibbon.PageExLabelFrame):
             self.units.set(UNITS[CNC.vars["units"]])
             self.distance.set(DISTANCE_MODE[CNC.vars["distance"]])
             self.plane.set(PLANE[CNC.vars["plane"]])
+            self.toolEntry.set(int(CNC.vars["tool"]))
             self.tlo.set(float(CNC.vars["TLO"]))
             self.g92.config(text=str(CNC.vars["G92"]))
         except KeyError:
