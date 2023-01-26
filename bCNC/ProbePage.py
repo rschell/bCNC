@@ -418,10 +418,28 @@ class ProbeCommonFrame(CNCRibbon.PageFrame):
 
     # -----------------------------------------------------------------------
     def calibrate_sensor(self, event=None):
+        alignedx = float(CNC.vars["mx"]) - float(CNC.vars["toolchangex"])
+        alignedy = float(CNC.vars["my"]) - float(CNC.vars["toolchangey"])
+        aligned = math.sqrt(alignedx*alignedx + alignedy*alignedy)
+        if aligned > 2:
+            messagebox.showerror(
+                _("Calibration Error"),
+                _("Make sure spindle is aligned in tool change position.")
+            )
+            return
+
+        clearance = float(CNC.vars["mz"]) - float(CNC.vars["mzsensor"])
+        if (clearance) > 10:
+            messagebox.showerror(
+                _("Calibration Error"),
+                _("Make sure tool and spindle nut have been removed " +
+                "and nose is less than 10 mm above before proceeding." +
+                "  Please lower spindle to less than 10 mm")
+            )
+            return
+
+        CNC.vars["sensorProbe"] = 10
         lines = []
-        lines.append("g53 g0 z[toolprobez]")
-        lines.append("g53 g0 x[toolprobex] y[toolprobey]")
-        lines.append("g53 g0 z[mzsensor+tooldistance]")
         if CNC.vars["fastprbfeed"]:
             prb_reverse = {"2": "4", "3": "5", "4": "2", "5": "3"}
             CNC.vars["prbcmdreverse"] = (
@@ -432,7 +450,7 @@ class ProbeCommonFrame(CNCRibbon.PageFrame):
                 lines.append("%wait")
                 lines.append(
                     f"g91 [prbcmd] {CNC.fmt('f', currentFeedrate)} "
-                    + "z[mzsensor-mz-tooldistance]"
+                    + "z[mzsensor-mz-sensorProbe]"
                 )
                 lines.append("%wait")
                 lines.append(
@@ -441,7 +459,7 @@ class ProbeCommonFrame(CNCRibbon.PageFrame):
                 )
                 currentFeedrate /= 10
         lines.append("%wait")
-        lines.append("g91 [prbcmd] f[prbfeed] z[mzsensor-mz-tooldistance]")
+        lines.append("g91 [prbcmd] f[prbfeed] z[mzsensor-mz-sensorProbe]")
         lines.append("g4 p1")  # wait a sec
         lines.append("%wait")
         lines.append("%global mzsensor; mzsensor=mz")
