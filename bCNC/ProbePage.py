@@ -2173,7 +2173,7 @@ class ToolFrame(CNCRibbon.PageFrame):
         row += 1
         col = 0
         Label(lframe,
-              text=_("Tool Length:")).grid(row=row, column=col, sticky=E)
+              text=_("TLO:")).grid(row=row, column=col, sticky=E)
         col += 1
         self.tlo = tkExtra.FloatEntry(
             lframe, background=tkExtra.GLOBAL_CONTROL_BACKGROUND, width=5
