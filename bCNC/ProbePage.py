@@ -432,9 +432,8 @@ class ProbeCommonFrame(CNCRibbon.PageFrame):
         if (clearance) > 10:
             messagebox.showerror(
                 _("Calibration Error"),
-                _("Make sure tool and spindle nut have been removed " +
-                "and nose is less than 10 mm above before proceeding." +
-                "  Please lower spindle to less than 10 mm")
+                _("Make sure reference tool is less than 10 mm above " +
+                "  sensor before proceeding.")
             )
             return
 
@@ -450,16 +449,16 @@ class ProbeCommonFrame(CNCRibbon.PageFrame):
                 lines.append("%wait")
                 lines.append(
                     f"g91 [prbcmd] {CNC.fmt('f', currentFeedrate)} "
-                    + "z[mzsensor-mz-sensorProbe]"
+                    + "z[-sensorProbe]"
                 )
                 lines.append("%wait")
                 lines.append(
                     f"[prbcmdreverse] {CNC.fmt('f', currentFeedrate)} "
-                    + "z[mzsensor-mz]"
+                    + "z[sensorProbe]"
                 )
                 currentFeedrate /= 10
         lines.append("%wait")
-        lines.append("g91 [prbcmd] f[prbfeed] z[mzsensor-mz-sensorProbe]")
+        lines.append("g91 [prbcmd] f[prbfeed] z[-sensorProbe]")
         lines.append("g4 p1")  # wait a sec
         lines.append("%wait")
         lines.append("%global mzsensor; mzsensor=mz")
