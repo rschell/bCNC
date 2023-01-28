@@ -2391,11 +2391,19 @@ class ToolFrame(CNCRibbon.PageFrame):
     # FIXME: Should be replaced with CNC.toolChange()
     # -----------------------------------------------------------------------
     def change(self, event=None):
-        tool = int(self.newTool.get())
+        tool = self.newTool.get()
+        if tool == "" or not tool.isdigit():
+            messagebox.showerror(
+                _("Tool Entry Error"),
+                _("Invalid New Tool entry"),
+                parent=self.winfo_toplevel(),
+            )
+            return
+        tool = int(tool)
         self.set()
         if self.check4Errors():
             return
-        lines = self.app.cnc.toolChange(tool or 0)
+        lines = self.app.cnc.toolChange(tool)
         self.app.run(lines=lines)
         CNC.vars["tool"] = tool
         self.event_generate("<<ProbeTool>>")
