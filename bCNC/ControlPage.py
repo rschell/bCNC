@@ -2580,6 +2580,7 @@ class StateFrame(CNCRibbon.PageExLabelFrame):
         CNC.vars["tool"] = Utils.getInt("State", "tool")
         CNC.vars["TLO"] = Utils.getFloat("State", "tlo")
         self.event_generate("<<ProbeTool>>")
+        self.event_generate("<<ProbeTLO>>")
 
     # ----------------------------------------------------------------------
     def overrideChange(self, event=None):
