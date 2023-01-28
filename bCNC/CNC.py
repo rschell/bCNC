@@ -1886,7 +1886,7 @@ class CNC:
                 # Adjust the current WCS to fit to the tool
                 # FIXME could be done dynamically in the code
                 p = WCS.index(CNC.vars["WCS"]) + 1
-                lines.append(f"g10l20p{int(p)} z[TLO]")
+                lines.append(f"g10l20p{int(p)} z[sensorheight]")
                 lines.append("%wait")
 
             elif CNC.toolPolicy == 3:
