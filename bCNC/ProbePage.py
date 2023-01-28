@@ -2189,7 +2189,7 @@ class ToolFrame(CNCRibbon.PageFrame):
                    padx=2, pady=1)
         b.grid(row=row, column=col, sticky=EW)
         tkExtra.Balloon.set(
-            b, _("Perform a probe to update length of tool")
+            b, _("Perform a probe to update Tool Length Offset")
         )
         self.addWidget(b)
 
