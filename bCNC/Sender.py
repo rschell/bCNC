@@ -741,7 +741,7 @@ class Sender:
                 tosend is None
                 and not self.sio_wait
                 and not self._pause
-                and (self.queue.qsize() > 0 or len(self._postInit) > 0)
+                and self.queue.qsize() > 0
             ):
                 try:
                     tosend = self.queue.get_nowait()
