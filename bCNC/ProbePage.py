@@ -466,7 +466,6 @@ class ProbeCommonFrame(CNCRibbon.PageFrame):
         lines.append("g91 g0 z[tooldistance]")
         lines.append("g90")
         self.app.run(lines=lines)
-        ProbeCommonFrame.probeSensor.set(CNC.vars["mzsensor"])
 
     # ------------------------------------------------------------------------
     def sensorSet(self, event=None):
@@ -474,6 +473,14 @@ class ProbeCommonFrame(CNCRibbon.PageFrame):
             CNC.vars["mzsensor"] = float(ProbeCommonFrame.probeSensor.get())
         except Exception:
             pass
+
+    # -----------------------------------------------------------------------
+    def getSensorMz(self):
+        ProbeCommonFrame.probeSensor.set(CNC.vars["mz"])
+
+    # -----------------------------------------------------------------------
+    def updateSensorMz(self, event=None):
+        ProbeCommonFrame.probeSensor.set(CNC.vars["mzsensor"])
 
     # ------------------------------------------------------------------------
     @staticmethod
@@ -514,10 +521,6 @@ class ProbeCommonFrame(CNCRibbon.PageFrame):
             if p.split()[0] == cmd:
                 ProbeCommonFrame.probeCmd.set(p)
                 break
-
-    # -----------------------------------------------------------------------
-    def getSensorMz(self):
-        ProbeCommonFrame.probeSensor.set(CNC.vars["mz"])
 
 
 # =============================================================================
