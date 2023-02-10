@@ -523,10 +523,6 @@ class ProbeCommonFrame(CNCRibbon.PageFrame):
                 ProbeCommonFrame.probeCmd.set(p)
                 break
 
-    # -----------------------------------------------------------------------
-    def getSensorMz(self):
-        ProbeCommonFrame.probeSensor.set(CNC.vars["mz"])
-
 
 # =============================================================================
 # Probe Frame
