@@ -2799,6 +2799,7 @@ class Application(Tk, Sender):
 
         # Update probe and draw point
         if self._probeUpdate:
+            Page.frames["ProbeCommon"].updateSensorMz()
             Page.frames["Probe:Probe"].updateProbe()
             Page.frames["Probe:Tool"].updateTLO()
             self.canvas.drawProbe()
