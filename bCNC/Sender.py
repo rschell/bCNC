@@ -8,6 +8,7 @@ import glob
 import os
 import re
 import sys
+import subprocess
 import threading
 import time
 import traceback
@@ -665,7 +666,7 @@ class Sender:
             self.log.put((Sender.MSG_RUNEND, str(CNC.vars["msg"])))
             if self._onStop:
                 try:
-                    os.system(self._onStop)
+                    subprocess.call(self._onStop, shell=False)
                 except Exception:
                     pass
         self._runLines = 0
