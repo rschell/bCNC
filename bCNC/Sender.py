@@ -39,7 +39,6 @@ WIKI = "https://github.com/vlachoudis/bCNC/wiki"
 SERIAL_POLL = 0.125  # s
 SERIAL_TIMEOUT = 0.10  # s
 G_POLL = 10  # s
-RX_BUFFER_SIZE = 128
 
 GPAT = re.compile(r"[A-Za-z]\s*[-+]?\d+.*")
 FEEDPAT = re.compile(r"^(.*)[fF](\d+\.?\d+)(.*)$")
@@ -102,6 +101,7 @@ class Sender:
         self.pendant = Queue()  # Command queue to be executed from Pendant
         self.serial = None
         self.thread = None
+        self.rx_buffer_size = 128
 
         self._posUpdate = False  # Update position
         self._probeUpdate = False  # Update probe
@@ -157,6 +157,8 @@ class Sender:
     # ----------------------------------------------------------------------
     def loadConfig(self):
         self.controllerSet(Utils.getStr("Connection", "controller"))
+        self.rx_buffer_size = Utils.getInt("Connection", "rx_buffer_size", 
+                                            self.rx_buffer_size)
         Pendant.port = Utils.getInt("Connection", "pendantport", Pendant.port)
         GCode.LOOP_MERGE = Utils.getBool("File", "dxfloopmerge")
         self.loadHistory()
@@ -644,7 +646,7 @@ class Sender:
 
     # ----------------------------------------------------------------------
     def getBufferFill(self):
-        return self._sumcline * 100.0 / RX_BUFFER_SIZE
+        return self._sumcline * 100.0 / self.rx_buffer_size
 
     # ----------------------------------------------------------------------
     def initRun(self):
@@ -851,7 +853,7 @@ class Sender:
                 if self._runLines != sys.maxsize:
                     self._stop = False
 
-            if tosend is not None and sum(cline) < RX_BUFFER_SIZE:
+            if tosend is not None and sum(cline) < self.rx_buffer_size:
                 self._sumcline = sum(cline)
                 if self.mcontrol.gcode_case > 0:
                     tosend = tosend.upper()

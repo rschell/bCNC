@@ -108,8 +108,6 @@ _baud = None
 MONITOR_AFTER = 200  # ms
 DRAW_AFTER = 300  # ms
 
-RX_BUFFER_SIZE = 128
-
 MAX_HISTORY = 500
 
 FILETYPES = [
