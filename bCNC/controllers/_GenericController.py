@@ -117,7 +117,6 @@ class _GenericController:
 
     def viewStatusReport(self):
         self.master.serial_write(b"?")
-        self.master.sio_status = True
 
     def viewParameters(self):
         self.master.sendGCode("$#")
@@ -249,10 +248,7 @@ class _GenericController:
             return True
 
         elif line[0] == "<":
-            if not self.master.sio_status:
-                self.master.log.put((self.master.MSG_RECEIVE, line))
-            else:
-                self.parseBracketAngle(line, cline)
+            self.parseBracketAngle(line, cline)
 
         elif line[0] == "[":
             self.master.log.put((self.master.MSG_RECEIVE, line))

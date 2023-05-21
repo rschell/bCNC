@@ -98,7 +98,6 @@ class Controller(_GenericGRBL):
             CNC.vars["_OvChanged"] = diff < -1
 
     def parseBracketAngle(self, line, cline):
-        self.master.sio_status = False
         fields = line[1:-1].split("|")
         CNC.vars["pins"] = ""
 
